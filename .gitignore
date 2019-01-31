@@ -1,0 +1,20 @@
+# Backup files
+*.skb
+AutoSave_*.skp
+Backup of *.layout
+
+# Archives
+*.rbz
+
+# RuboCop
+.rubocop-https-*-yml
+
+# YARD
+/.yardoc
+/doc
+
+# SimpleCov
+/coverage
+
+# Bundler
+Gemfile.lock
