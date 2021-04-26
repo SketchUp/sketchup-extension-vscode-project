@@ -1,27 +1,35 @@
-{
-  // See https://go.microsoft.com/fwlink/?LinkId=733558
-  // for the documentation about the tasks.json format
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Debug in SketchUp 2017",
-      "type": "shell",
-      "command": "skippy",
-      "args": [
-        "sketchup:debug",
-        "2017"
-      ],
-      "problemMatcher": []
-    },
-    {
-      "label": "Debug in SketchUp 2018",
-      "type": "shell",
-      "command": "skippy",
-      "args": [
-        "sketchup:debug",
-        "2018"
-      ],
-      "problemMatcher": []
-    }
-  ]
-}
+  {
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Launch SketchUp in Ruby Debug mode",
+        "type": "shell",
+        "command": "skippy",
+        "args": [
+          "sketchup:debug",
+          "${input:sketchupVersion}"
+        ],
+        "runOptions": {
+          "reevaluateOnRerun": false
+        },
+        "problemMatcher": []
+      }
+    ],
+    "inputs": [
+      {
+        "id": "sketchupVersion",
+        "type": "pickString",
+        "description": "SketchUp Version",
+        "options": [
+          "2021",
+          "2020",
+          "2019",
+          "2018",
+          "2017"
+        ],
+        "default": "2021"
+      }
+    ]
+  }
