@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Launch SketchUp in Ruby Debug mode",
+        "label": "Launch SketchUp in Ruby debug mode",
         "type": "shell",
         "command": "skippy",
         "args": [
