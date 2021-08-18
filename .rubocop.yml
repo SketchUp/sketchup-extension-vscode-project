@@ -23,7 +23,7 @@ AllCops:
     - profiling/
     - skippy/
     - tests/
-  TargetRubyVersion: 2.2 # Should have been 2.0 but RuboCop dropped support.
+  TargetRubyVersion: 2.4 # Should have been 2.0 but RuboCop dropped support.
 
 
 # If DisabledByDefault is set to true then we need to enable the SketchUp
