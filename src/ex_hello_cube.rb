@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Trimble Inc
+# Copyright 2016-2021 Trimble Inc
 # Licensed under the MIT license
 
 require 'sketchup.rb'
@@ -11,7 +11,7 @@ module Examples # TODO: Change module name to fit the project.
       ex = SketchupExtension.new('Hello Cube', 'ex_hello_cube/main')
       ex.description = 'SketchUp Ruby API example creating a cube.'
       ex.version     = '1.0.0'
-      ex.copyright   = 'Trimble Navigations © 2016-2019'
+      ex.copyright   = 'Trimble Inc © 2016-2021'
       ex.creator     = 'SketchUp'
       Sketchup.register_extension(ex, true)
       file_loaded(__FILE__)
