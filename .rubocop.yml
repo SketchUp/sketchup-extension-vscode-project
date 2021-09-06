@@ -4,7 +4,7 @@ require: rubocop-sketchup
 # the next line. RuboCop will then use the coding pattern from the
 # rubocop-sketchup project. This coding pattern is a more relaxed version than
 # the default RuboCop pattern.
-# inherit_from: https://raw.githubusercontent.com/SketchUp/rubocop-sketchup/master/sketchup-style.yml
+# inherit_from: https://raw.githubusercontent.com/SketchUp/rubocop-sketchup/main/sketchup-style.yml
 
 AllCops:
   # This prevents normal RuboCop cops to run. Disable this to get full static
