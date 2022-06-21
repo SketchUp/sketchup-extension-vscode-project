@@ -23,13 +23,14 @@
         "type": "pickString",
         "description": "SketchUp Version",
         "options": [
+          "2022",
           "2021",
           "2020",
           "2019",
           "2018",
           "2017"
         ],
-        "default": "2021"
+        "default": "2022"
       }
     ]
   }

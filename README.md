@@ -62,7 +62,7 @@ The short version is condensed here:
 3. Start typing `task`
 4. Pick `Tasks: Run Task`
 5. Pick `Launch SketchUp in Ruby debug mode`
-5. Pick the version of SketchUp to launch (e.g. `2021`)
+5. Pick the version of SketchUp to launch (e.g. `2022`)
 6. Wait for SketchUp to launch.
 7. Go to the Debug tab in VSCode (`Ctrl+Shift+D`)
 8. Pick `Listen for rdebug-ide` in the drop-down.
