@@ -14,5 +14,5 @@ end
 
 group :analysis do
   gem 'rubocop', '>= 1.30', '< 2.0'  # Static analysis of Ruby Code.
-  gem 'rubocop-sketchup', '~> 1.3.0' # Auto-complete for the SketchUp Rub API.
+  gem 'rubocop-sketchup', '~> 1.4.0' # Auto-complete for the SketchUp Rub API.
 end
