@@ -1,3 +1,13 @@
 {
   "solargraph.diagnostics": true,
+
+    // Don't forget to set the manager to custom when using this option
+    "rubyLsp.rubyVersionManager": "custom",
+
+    // Using a different version manager than the ones included by default
+    // "rubyLsp.customRubyCommand": "my_custom_version_manager activate",
+
+    // Adding a custom Ruby bin folder to the PATH
+    // TODO(thomthom): How to deal with this across different machines/platforms?
+    "rubyLsp.customRubyCommand": "set PATH=C:\\Ruby32-x64\\bin;%PATH%",
 }
