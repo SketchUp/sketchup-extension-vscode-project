@@ -4,6 +4,23 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
+    {
+      "type": "ruby_lsp",
+      "request": "attach",
+      "name": "Attach to a debuggee"
+    },
+    {
+      "type": "ruby_lsp",
+      "request": "launch",
+      "name": "Debug file",
+      "program": "ruby ${file}"
+    },
+    {
+      "type": "ruby_lsp",
+      "request": "launch",
+      "name": "Debug test file",
+      "program": "ruby -Itest ${relativeFile}"
+    },
 
     {
       "name": "Listen for rdebug-ide",

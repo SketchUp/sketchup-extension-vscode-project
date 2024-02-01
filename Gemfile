@@ -1,15 +1,20 @@
 source 'https://rubygems.org'
 
-group :development do
-  gem 'minitest' # Helps solargraph with code insight when you write unit tests.
+group :ide do
   gem 'sketchup-api-stubs'       # VSCode SketchUp Ruby API insight
-  gem 'skippy', '~> 0.5.1.a'     # Aid with common SketchUp extension tasks.
+  gem 'set'
+  gem 'rdbg'
+end
+
+group :development do
+  # gem 'minitest' # Helps solargraph with code insight when you write unit tests.
+  # gem 'skippy', '~> 0.5.1.a'     # Aid with common SketchUp extension tasks.
   gem 'solargraph'               # VSCode Ruby IDE support
 end
 
 group :documentation do
-  gem 'commonmarker', '~> 0.23'
-  gem 'yard', '~> 0.9'
+  # gem 'commonmarker', '~> 0.23'
+  # gem 'yard', '~> 0.9'
 end
 
 group :analysis do

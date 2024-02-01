@@ -1,13 +1,23 @@
 {
   "solargraph.diagnostics": true,
 
-    // Don't forget to set the manager to custom when using this option
-    "rubyLsp.rubyVersionManager": "custom",
+  // Don't forget to set the manager to custom when using this option
+  "rubyLsp.rubyVersionManager": "custom",
 
-    // Using a different version manager than the ones included by default
-    // "rubyLsp.customRubyCommand": "my_custom_version_manager activate",
+  // Using a different version manager than the ones included by default
+  // "rubyLsp.customRubyCommand": "my_custom_version_manager activate",
 
-    // Adding a custom Ruby bin folder to the PATH
-    // TODO(thomthom): How to deal with this across different machines/platforms?
-    "rubyLsp.customRubyCommand": "set PATH=C:\\Ruby32-x64\\bin;%PATH%",
+  // Adding a custom Ruby bin folder to the PATH
+  // TODO(thomthom): How to deal with this across different machines/platforms?
+  "rubyLsp.customRubyCommand": "set PATH=C:\\Ruby32-x64\\bin;%PATH%",
+
+  // All of these settings are scoped only to the Ruby language
+  // "[ruby]": {
+  //   "editor.defaultFormatter": "Shopify.ruby-lsp", // Use the Ruby LSP as the default formatter
+  //   "editor.formatOnSave": true, // Format files automatically when saving
+  //   "editor.tabSize": 2, // Use 2 spaces for indentation
+  //   "editor.insertSpaces": true, // Use spaces and not tabs for indentantion
+  //   "editor.semanticHighlighting.enabled": true, // Enable semantic highlighting
+  //   "editor.formatOnType": true, // Enable formatting while typing
+  // },
 }

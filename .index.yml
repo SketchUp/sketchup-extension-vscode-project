@@ -1,0 +1,5 @@
+excluded_gems:
+  - commonmarker
+  - rubocop
+  - rubocop-sketchup
+  - yard
