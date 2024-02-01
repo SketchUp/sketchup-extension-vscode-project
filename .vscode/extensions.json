@@ -10,10 +10,10 @@
     "editorconfig.editorconfig",
 
     // Essential for Ruby syntax highlighting and debugging.
-    "rebornix.ruby",
+    "shopify.ruby-lsp",
 
     // For code insight and auto-complete.
-    "castwide.solargraph"
+    // "castwide.solargraph"
   ],
   // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
   "unwantedRecommendations": []
