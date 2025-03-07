@@ -23,6 +23,9 @@
         "type": "pickString",
         "description": "SketchUp Version",
         "options": [
+          "2025",
+          "2024",
+          "2023",
           "2022",
           "2021",
           "2020",
@@ -30,7 +33,7 @@
           "2018",
           "2017"
         ],
-        "default": "2022"
+        "default": "2025"
       }
     ]
   }

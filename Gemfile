@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 group :development do
   gem 'minitest' # Helps solargraph with code insight when you write unit tests.
   gem 'sketchup-api-stubs'       # VSCode SketchUp Ruby API insight
-  gem 'skippy', '~> 0.5.1.a'     # Aid with common SketchUp extension tasks.
+  gem 'skippy', '~> 0.5.3.a'     # Aid with common SketchUp extension tasks.
   gem 'solargraph'               # VSCode Ruby IDE support
 end
 
