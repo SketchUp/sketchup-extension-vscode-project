@@ -8,6 +8,7 @@ Backup of *.layout
 
 # RuboCop
 .rubocop-https-*-yml
+.rubocop-remote-*.yml
 
 # YARD
 /.yardoc
