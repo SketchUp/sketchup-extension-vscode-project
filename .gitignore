@@ -19,3 +19,6 @@ Backup of *.layout
 
 # Bundler
 Gemfile.lock
+
+# Claude
+.claude/settings.local.json
