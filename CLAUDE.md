@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Boilerplate VSCode project for SketchUp Ruby extension development. The example extension (`HelloCube`) demonstrates the standard patterns.
 
+When prompted to "create an extension" reuse the existing extension. If the extension is using the example namespace `Examples::HelloCube` and example `ex_hello_cube` filenames, update the namespace and filenames to reflect the purpose of the extension. After this has been changed the first time, don't rename unless explicitly prompted.
+
 ## Key Commands
 
 ```bash
