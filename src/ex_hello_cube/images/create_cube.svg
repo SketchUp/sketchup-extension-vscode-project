@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <!-- 4px padding, so content area is 4,4 to 28,28 -->
+  <rect x="4" y="4" width="24" height="24" rx="3" ry="3" fill="#4A90D9" />
+  <polygon points="16,8 24,24 8,24" fill="white" />
+</svg>

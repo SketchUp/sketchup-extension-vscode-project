@@ -22,11 +22,34 @@ module Examples
       model.commit_operation
     end
 
+    # Returns the platform-appropriate file extension for vector icons.
+    def self.icon_extension
+      Sketchup.platform == :platform_win ? 'svg' : 'pdf'
+    end
+
+    # Returns the full path to an icon file in the images folder.
+    def self.icon_path(basename)
+      ext = icon_extension
+      File.join(__dir__, 'images', "#{basename}.#{ext}")
+    end
+
     unless file_loaded?(__FILE__)
       menu = UI.menu('Plugins')
       menu.add_item('Create Cube Example') {
         self.create_cube
       }
+
+      toolbar = UI::Toolbar.new('Hello Cube')
+      cmd = UI::Command.new('Create Cube') {
+        self.create_cube
+      }
+      cmd.small_icon = icon_path('create_cube')
+      cmd.large_icon = icon_path('create_cube')
+      cmd.tooltip = 'Create Cube'
+      cmd.status_bar_text = 'Creates a 1m cube at the origin.'
+      toolbar.add_item(cmd)
+      toolbar.show
+
       file_loaded(__FILE__)
     end
 
