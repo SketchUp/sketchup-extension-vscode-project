@@ -1,6 +1,7 @@
-require: rubocop-sketchup
+plugins:
+  - rubocop-sketchup
 
-# If you want to use the same codding pattern as SketchUp's projects, enable
+# If you want to use the same coding pattern as SketchUp's projects, enable
 # the next line. RuboCop will then use the coding pattern from the
 # rubocop-sketchup project. This coding pattern is a more relaxed version than
 # the default RuboCop pattern.
@@ -13,6 +14,7 @@ AllCops:
 
   SuggestExtensions:
     rubocop-minitest: false # Only used to aid IDE code insight
+    rubocop-rake: false
 
   DisplayCopNames: true
   DisplayStyleGuide: true
@@ -21,12 +23,12 @@ AllCops:
   - src/*/vendor/**/* # Exclude skippy vendor folder
   SketchUp:
     SourcePath: src
-    TargetSketchUpVersion: 2014
+    TargetSketchUpVersion: 2021
     Exclude: # Exclude common folders.
     - profiling/
     - skippy/
     - tests/
-  TargetRubyVersion: 2.0
+  TargetRubyVersion: 2.7 # SketchUp 2021 uses Ruby 2.7.
 
 
 # If DisabledByDefault is set to true then we need to enable the SketchUp

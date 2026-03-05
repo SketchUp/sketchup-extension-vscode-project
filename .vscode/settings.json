@@ -1,3 +1,9 @@
 {
   "solargraph.diagnostics": true,
+  "cSpell.words": [
+    "Commonmarker",
+    "RuboCop",
+    "SketchUp",
+    "Solargraph",
+  ],
 }

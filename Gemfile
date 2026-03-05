@@ -5,6 +5,7 @@ group :development do
   gem 'sketchup-api-stubs'       # VSCode SketchUp Ruby API insight
   gem 'skippy', '~> 0.5.3.a'     # Aid with common SketchUp extension tasks.
   gem 'solargraph'               # VSCode Ruby IDE support
+  gem 'rake'
 end
 
 group :documentation do
@@ -13,6 +14,6 @@ group :documentation do
 end
 
 group :analysis do
-  gem 'rubocop', '>= 1.30', '< 1.66.1'  # Static analysis of Ruby Code.
-  gem 'rubocop-sketchup', '~> 1.5.0'    # Static analysis for the SketchUp Ruby API.
+  gem 'rubocop', '>= 1.72', '< 2.0'  # Static analysis of Ruby Code.
+  gem 'rubocop-sketchup', '~> 2.1.1'    # Static analysis for the SketchUp Ruby API.
 end
