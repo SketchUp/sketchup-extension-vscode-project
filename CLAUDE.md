@@ -76,4 +76,8 @@ More information: https://ruby.sketchup.com/file.extension_requirements.html
 - `view.invalidate` is meant to be used from within a `Sketchup::Tool` to signal that the new should redraw. If you find yourself using this outside of a tool to trigger a refresh it's an indication of a bug in SketchUp and we ask you to log a bug report.
 - Use `view.invalidate` instead of `view.refresh`. `view.refresh` forces a redraw and can lead to poor performance and order bad side effects. Don't use unless you have a really good reason to workaround some viewport update issues.
 - Use `UI::HtmlDialog` instead of `UI::WebDialog` for creating UIs that require more control than what `UI.inputbox` and `UI.messagebox` provides. (https://github.com/SketchUp/htmldialog-examples)
-- Use vector images for toolbar icons and cursors. On Windows the format is `.svg` on macOS it is `.pdf`. The sizes are 32x32 (with a 4px empty padding) for large icons and 24x24 (with a 4px empty padding) for small icons.
+- Use vector images for toolbar icons and cursors. On Windows the format is `.svg` on macOS it is `.pdf`. The sizes are 32x32 (with a 4px empty padding) for large icons and 24x24 (with a 4px empty padding) for small icons. Both formats should be provided as extensions are distrobuted to both Windows and macOS users. Usually you want to make a utility function to pick the right extension and reuse that for each command.
+- When creating toolbar icons or cursor images, author them as `.svg` and convert to `.pdf` for macOS using Inkscape CLI. Inkscape may not be on PATH; use the default installation paths:
+  - **Windows:** `"/c/Program Files/Inkscape/bin/inkscape.exe"`
+  - **macOS:** `/Applications/Inkscape.app/Contents/MacOS/inkscape`
+  - **Conversion command:** `inkscape input.svg --export-filename=output.pdf`
