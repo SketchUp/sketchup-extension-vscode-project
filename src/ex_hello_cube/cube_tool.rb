@@ -43,8 +43,7 @@ module Examples
 
       def onMouseMove(_flags, x, y, view)
         @mouse_ip.pick(view, x, y, @guide_ip)
-        @mouse_x = x
-        @mouse_y = y
+        @mouse_pos = Geom::Point3d.new(x, y, 0)
         view.tooltip = @mouse_ip.tooltip
         view.invalidate
       end
@@ -52,8 +51,7 @@ module Examples
       def onLButtonDown(_flags, x, y, view)
         @mouse_ip.pick(view, x, y, @guide_ip)
         @guide_ip.copy!(@mouse_ip)
-        @mouse_x = x
-        @mouse_y = y
+        @mouse_pos = Geom::Point3d.new(x, y, 0)
 
         case @state
         when STATE_PICK_FIRST
@@ -99,8 +97,7 @@ module Examples
         @height_point = nil
         @mouse_ip = Sketchup::InputPoint.new
         @guide_ip = Sketchup::InputPoint.new
-        @mouse_x = 0
-        @mouse_y = 0
+        @mouse_pos = Geom::Point3d.new(0, 0, 0)
         @state = STATE_PICK_FIRST
       end
 
@@ -119,7 +116,7 @@ module Examples
           (base[0].z + base[2].z) / 2.0
         )
 
-        ray = view.pickray(@mouse_x, @mouse_y)
+        ray = view.pickray(@mouse_pos.x, @mouse_pos.y)
         ray_origin = ray[0]
         ray_dir = ray[1]
 
