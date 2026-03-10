@@ -42,13 +42,14 @@ module Examples
       end
 
       def onMouseMove(_flags, x, y, view)
-        @mouse_ip.pick(view, x, y, @picked_points.last)
+        @mouse_ip.pick(view, x, y, @guide_ip)
         view.tooltip = @mouse_ip.tooltip
         view.invalidate
       end
 
       def onLButtonDown(_flags, x, y, view)
-        @mouse_ip.pick(view, x, y, @picked_points.last)
+        @mouse_ip.pick(view, x, y, @guide_ip)
+        @guide_ip.copy!(@mouse_ip)
         point = @mouse_ip.position
 
         case @state
@@ -94,6 +95,7 @@ module Examples
         @picked_points = []
         @height_point = nil
         @mouse_ip = Sketchup::InputPoint.new
+        @guide_ip = Sketchup::InputPoint.new
         @state = STATE_PICK_FIRST
       end
 
