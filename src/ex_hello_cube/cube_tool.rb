@@ -102,10 +102,15 @@ module Examples
         @state = STATE_PICK_FIRST
       end
 
-      # Projects the current mouse screen position onto the base normal axis
-      # to determine the height point. Falls back to InputPoint position if
-      # the ray is nearly parallel to the normal (e.g. looking straight down).
+      # Returns a point used by compute_top_quad to determine the height.
+      # Prefers the InputPoint position when it snaps to geometry; otherwise
+      # projects the mouse ray onto the base normal axis.
       def height_point_from_mouse(view)
+        # When the InputPoint snapped to geometry, use its position directly.
+        if @mouse_ip.vertex || @mouse_ip.edge || @mouse_ip.face
+          return @mouse_ip.position
+        end
+
         base = compute_base_quad(@picked_points[0], @picked_points[1],
                                  @picked_points[2])
         normal = compute_quad_normal(base)
@@ -118,14 +123,11 @@ module Examples
         )
 
         ray = view.pickray(@mouse_pos.x, @mouse_pos.y)
-        ray_origin = ray[0]
-        ray_dir = ray[1]
 
         # Use closest_points between the mouse ray and the normal axis line.
         axis_line = [center, normal]
-        mouse_line = [ray_origin, ray_dir]
+        mouse_line = [ray[0], ray[1]]
         closest = Geom.closest_points(axis_line, mouse_line)
-        # closest[0] is the point on the normal axis closest to the mouse ray.
         closest[0]
       end
 
