@@ -283,23 +283,31 @@ module Examples
       def create_cube(view)
         base = compute_base_quad(@picked_points[0], @picked_points[1],
                                  @picked_points[2])
-        top = compute_top_quad(base, @height_point)
+        distance = compute_height(base, @height_point)
+        return if distance.zero?
 
         model = view.model
         model.start_operation('Create Cube', true)
         group = model.active_entities.add_group
-        ents = group.entities
-
-        ents.add_face(base)
-        ents.add_face(top)
-
-        # Side faces.
-        4.times do |i|
-          j = (i + 1) % 4
-          ents.add_face(base[i], base[j], top[j], top[i])
-        end
-
+        face = group.entities.add_face(base)
+        # The face normal may differ from our computed normal due to
+        # SketchUp auto-flipping. Compare them to get the right direction.
+        expected_normal = compute_quad_normal(base)
+        same_direction = (face.normal % expected_normal) > 0
+        face.pushpull(same_direction ? distance : -distance)
         model.commit_operation
+      end
+
+      def compute_height(base, point)
+        normal = compute_quad_normal(base)
+        return 0.0 if normal.length.zero?
+
+        center = Geom::Point3d.new(
+          (base[0].x + base[2].x) / 2.0,
+          (base[0].y + base[2].y) / 2.0,
+          (base[0].z + base[2].z) / 2.0
+        )
+        (point - center) % normal
       end
 
     end # class CubeTool
