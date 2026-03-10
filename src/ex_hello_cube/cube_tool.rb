@@ -77,16 +77,16 @@ module Examples
         bb = Geom::BoundingBox.new
         bb.add(@picked_points) unless @picked_points.empty?
         bb.add(@mouse_ip.position) if @mouse_ip.valid?
-        preview = preview_geometry
-        if preview
-          bb.add(preview[:base])
-          bb.add(preview[:top]) if preview[:top]
+        if @last_preview
+          bb.add(@last_preview[:base])
+          bb.add(@last_preview[:top]) if @last_preview[:top]
         end
         bb
       end
 
       def draw(view)
-        draw_preview(view)
+        @last_preview = preview_geometry(view)
+        draw_preview(view, @last_preview)
         @mouse_ip.draw(view) if @mouse_ip.display?
       end
 
@@ -98,6 +98,7 @@ module Examples
         @mouse_ip = Sketchup::InputPoint.new
         @guide_ip = Sketchup::InputPoint.new
         @mouse_pos = Geom::Point3d.new(0, 0, 0)
+        @last_preview = nil
         @state = STATE_PICK_FIRST
       end
 
@@ -163,15 +164,12 @@ module Examples
         end
       end
 
-      def draw_preview(view)
-        # Draw picked edges so far.
-        if @state >= STATE_PICK_SECOND && @mouse_ip.valid?
-          pts = @picked_points.dup
-          pts << @mouse_ip.position if @state == STATE_PICK_SECOND
-          draw_edges(view, pts)
+      def draw_preview(view, geom)
+        # Draw picked edges before we have a full base quad.
+        if @state == STATE_PICK_SECOND && @mouse_ip.valid?
+          draw_edges(view, [@picked_points[0], @mouse_ip.position])
         end
 
-        geom = preview_geometry(view)
         return unless geom
 
         base = geom[:base]
