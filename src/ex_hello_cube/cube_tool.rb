@@ -43,6 +43,8 @@ module Examples
 
       def onMouseMove(_flags, x, y, view)
         @mouse_ip.pick(view, x, y, @guide_ip)
+        @mouse_x = x
+        @mouse_y = y
         view.tooltip = @mouse_ip.tooltip
         view.invalidate
       end
@@ -50,20 +52,21 @@ module Examples
       def onLButtonDown(_flags, x, y, view)
         @mouse_ip.pick(view, x, y, @guide_ip)
         @guide_ip.copy!(@mouse_ip)
-        point = @mouse_ip.position
+        @mouse_x = x
+        @mouse_y = y
 
         case @state
         when STATE_PICK_FIRST
-          @picked_points[0] = point
+          @picked_points[0] = @mouse_ip.position
           @state = STATE_PICK_SECOND
         when STATE_PICK_SECOND
-          @picked_points[1] = point
+          @picked_points[1] = @mouse_ip.position
           @state = STATE_PICK_THIRD
         when STATE_PICK_THIRD
-          @picked_points[2] = point
+          @picked_points[2] = @mouse_ip.position
           @state = STATE_PICK_HEIGHT
         when STATE_PICK_HEIGHT
-          @height_point = point
+          @height_point = height_point_from_mouse(view)
           create_cube(view)
           reset_tool
         end
@@ -96,7 +99,36 @@ module Examples
         @height_point = nil
         @mouse_ip = Sketchup::InputPoint.new
         @guide_ip = Sketchup::InputPoint.new
+        @mouse_x = 0
+        @mouse_y = 0
         @state = STATE_PICK_FIRST
+      end
+
+      # Projects the current mouse screen position onto the base normal axis
+      # to determine the height point. Falls back to InputPoint position if
+      # the ray is nearly parallel to the normal (e.g. looking straight down).
+      def height_point_from_mouse(view)
+        base = compute_base_quad(@picked_points[0], @picked_points[1],
+                                 @picked_points[2])
+        normal = compute_quad_normal(base)
+        return @mouse_ip.position if normal.length.zero?
+
+        center = Geom::Point3d.new(
+          (base[0].x + base[2].x) / 2.0,
+          (base[0].y + base[2].y) / 2.0,
+          (base[0].z + base[2].z) / 2.0
+        )
+
+        ray = view.pickray(@mouse_x, @mouse_y)
+        ray_origin = ray[0]
+        ray_dir = ray[1]
+
+        # Use closest_points between the mouse ray and the normal axis line.
+        axis_line = [center, normal]
+        mouse_line = [ray_origin, ray_dir]
+        closest = Geom.closest_points(axis_line, mouse_line)
+        # closest[0] is the point on the normal axis closest to the mouse ray.
+        closest[0]
       end
 
       def update_ui
@@ -114,14 +146,13 @@ module Examples
 
       # Returns a hash with :base (4 points) and optionally :top (4 points)
       # based on the current state and mouse position.
-      def preview_geometry
+      def preview_geometry(view = nil)
         return nil unless @mouse_ip.valid?
 
         mouse = @mouse_ip.position
 
         case @state
         when STATE_PICK_SECOND
-          # Show a line from first point to mouse.
           nil
         when STATE_PICK_THIRD
           base = compute_base_quad(@picked_points[0], @picked_points[1], mouse)
@@ -129,7 +160,8 @@ module Examples
         when STATE_PICK_HEIGHT
           base = compute_base_quad(@picked_points[0], @picked_points[1],
                                    @picked_points[2])
-          top = compute_top_quad(base, mouse)
+          height_pt = view ? height_point_from_mouse(view) : mouse
+          top = compute_top_quad(base, height_pt)
           { base: base, top: top }
         end
       end
@@ -142,7 +174,7 @@ module Examples
           draw_edges(view, pts)
         end
 
-        geom = preview_geometry
+        geom = preview_geometry(view)
         return unless geom
 
         base = geom[:base]
