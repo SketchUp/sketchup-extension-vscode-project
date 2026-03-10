@@ -73,7 +73,7 @@ module Examples
 
       def getExtents
         bb = Geom::BoundingBox.new
-        bb.add(@picked_points.compact)
+        bb.add(@picked_points) unless @picked_points.empty?
         bb.add(@mouse_ip.position) if @mouse_ip.valid?
         preview = preview_geometry
         if preview
