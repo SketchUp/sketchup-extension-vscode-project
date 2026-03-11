@@ -41,9 +41,7 @@ module Examples
 
       def onCancel(reason, view)
         if reason == CANCEL_ESC && @state > STATE_PICK_FIRST
-          @state -= 1
-          @picked_points.pop
-          @guide_ip.clear
+          step_back
         else
           reset_tool
         end
@@ -101,6 +99,12 @@ module Examples
       end
 
       private
+
+      def step_back
+        @state -= 1
+        @picked_points.pop
+        @guide_ip.clear
+      end
 
       def reset_tool
         @picked_points = []
