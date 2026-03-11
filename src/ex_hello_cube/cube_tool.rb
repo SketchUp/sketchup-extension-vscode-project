@@ -282,13 +282,13 @@ module Examples
       # @param pt3 [Geom::Point3d]
       # @return [Array<Geom::Point3d>]
       def compute_base_quad(pt1, pt2, pt3)
-        edge_vec = pt2 - pt1
+        edge_vec = pt1.vector_to(pt2)
         return [pt1, pt1, pt1, pt1] if edge_vec.length.zero?
 
         # Subtract the component of (pt3 - pt1) along the first edge to get
         # the perpendicular offset that defines the rectangle width.
         edge_unit = edge_vec.normalize
-        to_pt3 = pt3 - pt1
+        to_pt3 = pt1.vector_to(pt3)
         proj_along = to_pt3 % edge_unit
         perp_vec = Geom::Vector3d.new(
           to_pt3.x - edge_unit.x * proj_along,
@@ -317,7 +317,7 @@ module Examples
 
         # Project mouse onto the normal direction from the base center.
         center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
-        to_mouse = mouse_pt - center
+        to_mouse = center.vector_to(mouse_pt)
         height = to_mouse % normal # signed projection
         offset = Geom::Vector3d.new(
           normal.x * height,
@@ -332,8 +332,8 @@ module Examples
       # @param quad [Array<Geom::Point3d>]
       # @return [Geom::Vector3d]
       def compute_quad_normal(quad)
-        v1 = quad[1] - quad[0]
-        v2 = quad[3] - quad[0]
+        v1 = quad[0].vector_to(quad[1])
+        v2 = quad[0].vector_to(quad[3])
         normal = v1 * v2 # cross product
         return normal if normal.length.zero?
 
@@ -349,8 +349,8 @@ module Examples
 
         # Build a local coordinate system from the cube's edges so the
         # group's bounding box aligns with the cube geometry.
-        x_axis = base[1] - base[0]
-        y_axis = base[3] - base[0]
+        x_axis = base[0].vector_to(base[1])
+        y_axis = base[0].vector_to(base[3])
         z_axis = compute_quad_normal(base)
         width  = x_axis.length
         depth  = y_axis.length
@@ -382,7 +382,7 @@ module Examples
         return 0.0 if normal.length.zero?
 
         center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
-        (point - center) % normal
+        center.vector_to(point) % normal
       end
 
     end # class CubeTool
