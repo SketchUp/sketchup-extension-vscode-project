@@ -130,11 +130,7 @@ module Examples
         normal = compute_quad_normal(base)
         return @mouse_ip.position if normal.length.zero?
 
-        center = Geom::Point3d.new(
-          (base[0].x + base[2].x) / 2.0,
-          (base[0].y + base[2].y) / 2.0,
-          (base[0].z + base[2].z) / 2.0
-        )
+        center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
 
         ray = view.pickray(@mouse_pos.x, @mouse_pos.y)
 
@@ -268,11 +264,7 @@ module Examples
         return base.dup if normal.length.zero?
 
         # Project mouse onto the normal direction from the base center.
-        center = Geom::Point3d.new(
-          (base[0].x + base[2].x) / 2.0,
-          (base[0].y + base[2].y) / 2.0,
-          (base[0].z + base[2].z) / 2.0
-        )
+        center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
         to_mouse = mouse_pt - center
         height = to_mouse % normal # signed projection
         offset = Geom::Vector3d.new(
@@ -331,11 +323,7 @@ module Examples
         normal = compute_quad_normal(base)
         return 0.0 if normal.length.zero?
 
-        center = Geom::Point3d.new(
-          (base[0].x + base[2].x) / 2.0,
-          (base[0].y + base[2].y) / 2.0,
-          (base[0].z + base[2].z) / 2.0
-        )
+        center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
         (point - center) % normal
       end
 
