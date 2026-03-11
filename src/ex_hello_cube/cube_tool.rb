@@ -63,13 +63,13 @@ module Examples
 
         case @state
         when STATE_PICK_FIRST
-          @picked_points[0] = @mouse_ip.position
+          @picked_points << @mouse_ip.position
           @state = STATE_PICK_SECOND
         when STATE_PICK_SECOND
-          @picked_points[1] = @mouse_ip.position
+          @picked_points << @mouse_ip.position
           @state = STATE_PICK_THIRD
         when STATE_PICK_THIRD
-          @picked_points[2] = @mouse_ip.position
+          @picked_points << @mouse_ip.position
           @state = STATE_PICK_HEIGHT
         when STATE_PICK_HEIGHT
           @height_point = height_point_from_mouse(view)
