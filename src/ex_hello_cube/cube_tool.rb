@@ -296,15 +296,30 @@ module Examples
         distance = compute_height(base, @height_point)
         return if distance.zero?
 
+        # Build a local coordinate system from the cube's edges so the
+        # group's bounding box aligns with the cube geometry.
+        x_axis = base[1] - base[0]
+        y_axis = base[3] - base[0]
+        z_axis = compute_quad_normal(base)
+        width  = x_axis.length
+        depth  = y_axis.length
+
+        tr = Geom::Transformation.axes(base[0], x_axis, y_axis, z_axis)
+
+        # Create the base face in local coordinates (axis-aligned).
+        local_base = [
+          Geom::Point3d.new(0, 0, 0),
+          Geom::Point3d.new(width, 0, 0),
+          Geom::Point3d.new(width, depth, 0),
+          Geom::Point3d.new(0, depth, 0),
+        ]
+
         model = view.model
         model.start_operation('Create Cube', true)
         group = model.active_entities.add_group
-        face = group.entities.add_face(base)
-        # The face normal may differ from our computed normal due to
-        # SketchUp auto-flipping. Compare them to get the right direction.
-        expected_normal = compute_quad_normal(base)
-        same_direction = (face.normal % expected_normal) > 0
-        face.pushpull(same_direction ? distance : -distance)
+        group.transformation = tr
+        face = group.entities.add_face(local_base)
+        face.pushpull(-distance)
         model.commit_operation
       end
 
