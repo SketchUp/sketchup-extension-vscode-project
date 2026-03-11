@@ -12,6 +12,10 @@ module Examples
       EDGE_COLOR = Sketchup::Color.new(50, 100, 255, 192)
       EDGE_WIDTH = 2
 
+      CANCEL_ESC        = 0
+      CANCEL_REACTIVATE = 1
+      CANCEL_UNDO       = 2
+
       STATE_PICK_FIRST  = 0
       STATE_PICK_SECOND = 1
       STATE_PICK_THIRD  = 2
@@ -35,8 +39,14 @@ module Examples
         view.invalidate
       end
 
-      def onCancel(_reason, view)
-        reset_tool
+      def onCancel(reason, view)
+        if reason == CANCEL_ESC && @state > STATE_PICK_FIRST
+          @state -= 1
+          @picked_points.pop
+          @guide_ip.clear
+        else
+          reset_tool
+        end
         update_ui
         view.invalidate
       end
