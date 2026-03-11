@@ -313,8 +313,7 @@ module Examples
         center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
         to_mouse = center.vector_to(mouse_pt)
         height = to_mouse.dot(normal) # signed projection
-        offset = Geom::Vector3d.new(normal.to_a.map { |c| c * height })
-        base.map { |pt| pt.offset(offset) }
+        base.map { |pt| pt.offset(normal, height) }
       end
 
       # @param quad [Array<Geom::Point3d>]
