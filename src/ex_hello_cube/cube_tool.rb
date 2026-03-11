@@ -296,13 +296,7 @@ module Examples
           to_pt3.z - edge_unit.z * proj_along
         )
 
-        p1 = pt1
-        p2 = pt2
-        p3 = Geom::Point3d.new(pt2.x + perp_vec.x, pt2.y + perp_vec.y,
-                                pt2.z + perp_vec.z)
-        p4 = Geom::Point3d.new(pt1.x + perp_vec.x, pt1.y + perp_vec.y,
-                                pt1.z + perp_vec.z)
-        [p1, p2, p3, p4]
+        [pt1, pt2, pt2.offset(perp_vec), pt1.offset(perp_vec)]
       end
 
       # Extrude the base quad upward (along base normal) to match the height
@@ -319,14 +313,8 @@ module Examples
         center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
         to_mouse = center.vector_to(mouse_pt)
         height = to_mouse.dot(normal) # signed projection
-        offset = Geom::Vector3d.new(
-          normal.x * height,
-          normal.y * height,
-          normal.z * height
-        )
-        base.map { |pt|
-          Geom::Point3d.new(pt.x + offset.x, pt.y + offset.y, pt.z + offset.z)
-        }
+        offset = Geom::Vector3d.new(normal.to_a.map { |c| c * height })
+        base.map { |pt| pt.offset(offset) }
       end
 
       # @param quad [Array<Geom::Point3d>]
