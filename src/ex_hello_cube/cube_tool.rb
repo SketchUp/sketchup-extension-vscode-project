@@ -289,7 +289,7 @@ module Examples
         # the perpendicular offset that defines the rectangle width.
         edge_unit = edge_vec.normalize
         to_pt3 = pt1.vector_to(pt3)
-        proj_along = to_pt3 % edge_unit
+        proj_along = to_pt3.dot(edge_unit)
         perp_vec = Geom::Vector3d.new(
           to_pt3.x - edge_unit.x * proj_along,
           to_pt3.y - edge_unit.y * proj_along,
@@ -318,7 +318,7 @@ module Examples
         # Project mouse onto the normal direction from the base center.
         center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
         to_mouse = center.vector_to(mouse_pt)
-        height = to_mouse % normal # signed projection
+        height = to_mouse.dot(normal) # signed projection
         offset = Geom::Vector3d.new(
           normal.x * height,
           normal.y * height,
@@ -334,7 +334,7 @@ module Examples
       def compute_quad_normal(quad)
         v1 = quad[0].vector_to(quad[1])
         v2 = quad[0].vector_to(quad[3])
-        normal = v1 * v2 # cross product
+        normal = v1.cross(v2)
         return normal if normal.length.zero?
 
         normal.normalize
@@ -382,7 +382,7 @@ module Examples
         return 0.0 if normal.length.zero?
 
         center = Geom.linear_combination(0.5, base[0], 0.5, base[2])
-        center.vector_to(point) % normal
+        center.vector_to(point).dot(normal)
       end
 
     end # class CubeTool
