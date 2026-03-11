@@ -288,13 +288,9 @@ module Examples
         # Subtract the component of (pt3 - pt1) along the first edge to get
         # the perpendicular offset that defines the rectangle width.
         edge_unit = edge_vec.normalize
-        to_pt3 = pt1.vector_to(pt3)
-        proj_along = to_pt3.dot(edge_unit)
-        perp_vec = Geom::Vector3d.new(
-          to_pt3.x - edge_unit.x * proj_along,
-          to_pt3.y - edge_unit.y * proj_along,
-          to_pt3.z - edge_unit.z * proj_along
-        )
+        proj_along = pt1.vector_to(pt3).dot(edge_unit) # distance from pt1 to pt3 along the edge
+        proj_pt = pt1.offset(edge_unit, proj_along) # pt3 projected onto the edge line
+        perp_vec = proj_pt.vector_to(pt3) # perpendicular offset from edge to pt3
 
         [pt1, pt2, pt2.offset(perp_vec), pt1.offset(perp_vec)]
       end
