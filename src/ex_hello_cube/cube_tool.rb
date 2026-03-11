@@ -21,6 +21,23 @@ module Examples
       STATE_PICK_THIRD  = 2
       STATE_PICK_HEIGHT = 3
 
+      def initialize
+        # @type [Array<Geom::Point3d>]
+        @picked_points = []
+        # @type [Geom::Point3d, nil]
+        @height_point = nil
+        # @type [Sketchup::InputPoint]
+        @mouse_ip = Sketchup::InputPoint.new
+        # @type [Sketchup::InputPoint]
+        @guide_ip = Sketchup::InputPoint.new
+        # @type [Geom::Point3d]
+        @mouse_pos = Geom::Point3d.new(0, 0, 0)
+        # @type [Hash{Symbol => Array<Geom::Point3d>}, nil]
+        @last_preview = nil
+        # @type [Integer]
+        @state = STATE_PICK_FIRST
+      end
+
       def activate
         reset_tool
         update_ui
