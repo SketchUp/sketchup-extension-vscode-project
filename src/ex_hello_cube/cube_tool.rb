@@ -26,19 +26,24 @@ module Examples
         update_ui
       end
 
+      # @param view [Sketchup::View]
       def deactivate(view)
         view.invalidate
       end
 
+      # @param view [Sketchup::View]
       def suspend(view)
         view.invalidate
       end
 
+      # @param view [Sketchup::View]
       def resume(view)
         update_ui
         view.invalidate
       end
 
+      # @param reason [Integer]
+      # @param view [Sketchup::View]
       def onCancel(reason, view)
         if reason == CANCEL_ESC && @state > STATE_PICK_FIRST
           step_back
@@ -49,6 +54,10 @@ module Examples
         view.invalidate
       end
 
+      # @param _flags [Integer]
+      # @param x [Integer]
+      # @param y [Integer]
+      # @param view [Sketchup::View]
       def onMouseMove(_flags, x, y, view)
         @mouse_ip.pick(view, x, y, @guide_ip)
         @mouse_pos = Geom::Point3d.new(x, y, 0)
@@ -56,6 +65,10 @@ module Examples
         view.invalidate
       end
 
+      # @param _flags [Integer]
+      # @param x [Integer]
+      # @param y [Integer]
+      # @param view [Sketchup::View]
       def onLButtonDown(_flags, x, y, view)
         @mouse_ip.pick(view, x, y, @guide_ip)
         @guide_ip.copy!(@mouse_ip)
@@ -81,6 +94,7 @@ module Examples
         view.invalidate
       end
 
+      # @return [Geom::BoundingBox]
       def getExtents
         bb = Geom::BoundingBox.new
         bb.add(@picked_points) unless @picked_points.empty?
@@ -92,6 +106,7 @@ module Examples
         bb
       end
 
+      # @param view [Sketchup::View]
       def draw(view)
         @last_preview = preview_geometry(view)
         draw_preview(view, @last_preview)
@@ -119,6 +134,9 @@ module Examples
       # Returns a point used by compute_top_quad to determine the height.
       # Prefers the InputPoint position when it snaps to geometry; otherwise
       # projects the mouse ray onto the base normal axis.
+      #
+      # @param view [Sketchup::View]
+      # @return [Geom::Point3d]
       def height_point_from_mouse(view)
         # When the InputPoint snapped to geometry, use its position directly.
         if @mouse_ip.vertex || @mouse_ip.edge || @mouse_ip.face
@@ -154,8 +172,8 @@ module Examples
         end
       end
 
-      # Returns a hash with :base (4 points) and optionally :top (4 points)
-      # based on the current state and mouse position.
+      # @param view [Sketchup::View, nil]
+      # @return [Hash{Symbol => Array<Geom::Point3d>}, nil]
       def preview_geometry(view = nil)
         return nil unless @mouse_ip.valid?
 
@@ -176,6 +194,8 @@ module Examples
         end
       end
 
+      # @param view [Sketchup::View]
+      # @param geom [Hash{Symbol => Array<Geom::Point3d>}, nil]
       def draw_preview(view, geom)
         # Draw picked edges before we have a full base quad.
         if @state == STATE_PICK_SECOND && @mouse_ip.valid?
@@ -209,11 +229,15 @@ module Examples
         end
       end
 
+      # @param view [Sketchup::View]
+      # @param quad [Array<Geom::Point3d>]
       def draw_filled_quad(view, quad)
         view.drawing_color = PREVIEW_COLOR
         view.draw(GL_TRIANGLE_FAN, quad)
       end
 
+      # @param view [Sketchup::View]
+      # @param quad [Array<Geom::Point3d>]
       def draw_edge_loop(view, quad)
         view.line_stipple = ''
         view.line_width = EDGE_WIDTH
@@ -222,6 +246,8 @@ module Examples
         view.draw(GL_LINE_STRIP, edges)
       end
 
+      # @param view [Sketchup::View]
+      # @param pts [Array<Geom::Point3d>]
       def draw_edges(view, pts)
         return if pts.length < 2
 
@@ -233,6 +259,11 @@ module Examples
 
       # Computes the four base corners from the first two picked points and a
       # third point that defines the width perpendicular to the first edge.
+      #
+      # @param pt1 [Geom::Point3d]
+      # @param pt2 [Geom::Point3d]
+      # @param pt3 [Geom::Point3d]
+      # @return [Array<Geom::Point3d>]
       def compute_base_quad(pt1, pt2, pt3)
         edge_vec = pt2 - pt1
         return [pt1, pt1, pt1, pt1] if edge_vec.length.zero?
@@ -259,6 +290,10 @@ module Examples
 
       # Extrude the base quad upward (along base normal) to match the height
       # implied by the mouse position.
+      #
+      # @param base [Array<Geom::Point3d>]
+      # @param mouse_pt [Geom::Point3d]
+      # @return [Array<Geom::Point3d>]
       def compute_top_quad(base, mouse_pt)
         normal = compute_quad_normal(base)
         return base.dup if normal.length.zero?
@@ -277,6 +312,8 @@ module Examples
         }
       end
 
+      # @param quad [Array<Geom::Point3d>]
+      # @return [Geom::Vector3d]
       def compute_quad_normal(quad)
         v1 = quad[1] - quad[0]
         v2 = quad[3] - quad[0]
@@ -286,6 +323,7 @@ module Examples
         normal.normalize
       end
 
+      # @param view [Sketchup::View]
       def create_cube(view)
         base = compute_base_quad(@picked_points[0], @picked_points[1],
                                  @picked_points[2])
@@ -319,6 +357,9 @@ module Examples
         model.commit_operation
       end
 
+      # @param base [Array<Geom::Point3d>]
+      # @param point [Geom::Point3d]
+      # @return [Float]
       def compute_height(base, point)
         normal = compute_quad_normal(base)
         return 0.0 if normal.length.zero?
