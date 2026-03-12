@@ -66,18 +66,54 @@ More information: https://ruby.sketchup.com/file.extension_requirements.html
 ## Best practices
 
 - When starting operations, disable UI updates for the span of the operation by setting the second argument: `model.start_operation('Create Cube', true)`.
+- When creating groups with non-axis-aligned geometry, set a `Geom::Transformation` on the group so the geometry is axis-aligned in local space. This makes the group's bounding box tightly fit the geometry. Use `Geom::Transformation.axes` to build the local coordinate system.
+- Prefer `pushpull` on a base face over manually creating all six faces of a box. It handles face orientation correctly and is less error-prone. Check `face.normal` against the expected direction to determine the sign of the pushpull distance.
+
+### Documentation
+
+- YARD documentation: add `@param` and `@return` tags for methods with meaningful return values. Do not add `@return [void]` — omit `@return` when the return value is not used.
+
+### Coding pattern
+
 - Important! Don't add `try`/`catch` unless you are highly confident that an error can reasonably be expected and you have some way to recover usefully. Bad example: catch "maybe errors" and ignore or print to Ruby Console. The error is still essentially unhandled, let the normal error mechanisms propagate. Good example: Attempt to read a file, handle exceptions related to reading/accessing the file because file operations are actions where you can reasonable expect a failure and do something useful such as inform the user.
 - Important! Don't check for `nil` unless you are highly confident that is a possibility. If the program logic doesn't expect `nil` then it would be a bug to see `nil` and the application/extension is better of throwing an error instead of silently ignoring it. Fail early on unmet program expectations.
+
+### Code Organization
+
+- Use `Sketchup.require` with paths relative to the extension root (e.g., `Sketchup.require('my_extension/some_file')`), not `__dir__`. Using `__dir__` has encoding issues on Windows with non-ASCII paths.
+- Place `Sketchup.require`/`require` statements at the top of the file, Ruby standard library first, then extension files, in alphabetical order.
+
+### Performance
+
 - Prefer bulk methods for performance. Slow: `entities.each { |e| selection.add(e) if e.is_a?(Sketchup::Face) }`. Fast: `selection.add(entities.grep(Sketchup::Face))`.
 - Don't modify the container you iterate: Bad: `model.entities.each { |e| e.erase! }`. Safe (using a copy): `model.entities.to_a.each { |e| e.erase! }`. Best (performance): `model.entities.erase_entities(array_of_entities_to_erase)`.
 - Don't use `entity.typename == 'Face'` to check for types, it is _very_ slow. Use the type system: `entity.is_a?(Sketchup::Face)`.
-- Keep Ruby `Sketchup::Tool` implementations slim. Treat them as controllers and place the business logic in other files/classes/modules and mainly orchestrate user input.
-- Remember to implement `getExtents` when drawing to the viewport from a `Sketchup::Tool` or `Sketchup::Overlay`. If you draw outside the model bounds the drawing will be clipped if a custom bound is not provided.
-- `view.invalidate` is meant to be used from within a `Sketchup::Tool` to signal that the new should redraw. If you find yourself using this outside of a tool to trigger a refresh it's an indication of a bug in SketchUp and we ask you to log a bug report.
-- Use `view.invalidate` instead of `view.refresh`. `view.refresh` forces a redraw and can lead to poor performance and order bad side effects. Don't use unless you have a really good reason to workaround some viewport update issues.
-- Use `UI::HtmlDialog` instead of `UI::WebDialog` for creating UIs that require more control than what `UI.inputbox` and `UI.messagebox` provides. (https://github.com/SketchUp/htmldialog-examples)
+- Prefer SketchUp API geometry methods over manual component arithmetic — they are implemented in C++ and faster:
+  - `pt1.vector_to(pt2)` instead of `pt2 - pt1` for vectors between points.
+  - `pt.offset(vec)` or `pt.offset(vec, distance)` instead of manually adding components.
+  - `v1.dot(v2)` and `v1.cross(v2)` instead of `%` and `*` operators for readability.
+  - `Geom.linear_combination(w1, pt1, w2, pt2)` for weighted point interpolation (e.g., midpoints).
+
+### Toolbars
+
 - Use vector images for toolbar icons and cursors. On Windows the format is `.svg` on macOS it is `.pdf`. The sizes are 32x32 (with a 4px empty padding) for large icons and 24x24 (with a 4px empty padding) for small icons. Both formats should be provided as extensions are distrobuted to both Windows and macOS users. Usually you want to make a utility function to pick the right extension and reuse that for each command.
 - When creating toolbar icons or cursor images, author them as `.svg` and convert to `.pdf` for macOS using Inkscape CLI. Inkscape may not be on PATH; use the default installation paths:
   - **Windows:** `"/c/Program Files/Inkscape/bin/inkscape.exe"`
   - **macOS:** `/Applications/Inkscape.app/Contents/MacOS/inkscape`
   - **Conversion command:** `inkscape input.svg --export-filename=output.pdf`
+
+### Sketchup::Tool patterns
+
+- Keep implementations slim. Treat tools as controllers and place the business logic in other files/classes/modules.
+- Initialize all instance variables in `initialize`, not just in `activate` or a reset method. This ensures tools have a well-defined initial state.
+- Remember to implement `getExtents` when drawing to the viewport. If you draw outside the model bounds the drawing will be clipped if a custom bound is not provided.
+- Always call `view.invalidate` in both `deactivate` and `suspend` callbacks, in addition to the other callbacks that modify state. This is flagged by the `SketchupSuggestions/ToolInvalidate` RuboCop cop.
+- For multi-step input: use a second `Sketchup::InputPoint` as a guide and pass it to the primary InputPoint's `pick` method for snapping inference. Copy the primary InputPoint to the guide after each accepted click.
+- When `InputPoint` may not snap to geometry (e.g., looking top-down during a height pick), fall back to projecting the mouse ray onto the constraint axis using `view.pickray` and `Geom.closest_points`.
+- In `onCancel`, check the `reason` parameter: `0` = ESC key, `1` = reactivate, `2` = undo. ESC should typically step back one state; other reasons should fully reset the tool.
+- `view.invalidate` is meant to be used from within a `Sketchup::Tool` to signal that the view should redraw. If you find yourself using this outside of a tool to trigger a refresh it's an indication of a bug in SketchUp and we ask you to log a bug report.
+- Use `view.invalidate` instead of `view.refresh`. `view.refresh` forces a redraw and can lead to poor performance and other bad side effects. Don't use unless you have a really good reason to workaround some viewport update issues.
+
+### UI::WebDialog and UI::HtmlDialog
+
+- Use `UI::HtmlDialog` instead of `UI::WebDialog` for creating UIs that require more control than what `UI.inputbox` and `UI.messagebox` provides. (https://github.com/SketchUp/htmldialog-examples)
