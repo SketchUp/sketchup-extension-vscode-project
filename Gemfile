@@ -14,6 +14,6 @@ group :documentation do
 end
 
 group :analysis do
-  gem 'rubocop', '>= 1.72', '< 2.0'  # Static analysis of Ruby Code.
+  gem 'rubocop', '>= 1.85', '< 2.0'  # Static analysis of Ruby Code.
   gem 'rubocop-sketchup', '~> 2.1.1'    # Static analysis for the SketchUp Ruby API.
 end

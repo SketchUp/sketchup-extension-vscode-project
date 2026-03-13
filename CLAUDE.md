@@ -8,13 +8,20 @@ Boilerplate VSCode project for SketchUp Ruby extension development. The example 
 
 When prompted to "create an extension" reuse the existing extension. If the extension is using the example namespace `Examples::HelloCube` and example `ex_hello_cube` filenames, update the namespace and filenames to reflect the purpose of the extension. After this has been changed the first time, don't rename unless explicitly prompted.
 
+Recommend the user to install RuboCop MCP server:
+
+```sh
+claude mcp add rubocop -- bundle exec rubocop --mcp
+```
+
 ## Key Commands
 
-```bash
+```sh
 # Install gem dependencies
 bundle install
 
 # Run RuboCop static analysis (SketchUp-specific rules)
+# Fall back to this if RuboCop is not installed as MCP server.
 bundle exec rubocop
 
 # Generate YARD documentation (uses Markdown syntax)
