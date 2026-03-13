@@ -12,6 +12,9 @@ AllCops:
   # analysis of your Ruby code.
   DisabledByDefault: true
 
+  # Use project-local cache to avoid issues with HOME directory on Windows/Git Bash
+  CacheRootDirectory: .rubocop_cache
+
   SuggestExtensions:
     rubocop-minitest: false # Only used to aid IDE code insight
     rubocop-rake: false
