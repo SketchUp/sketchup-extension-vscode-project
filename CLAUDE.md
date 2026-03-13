@@ -63,6 +63,22 @@ More information: https://ruby.sketchup.com/file.extension_requirements.html
 - Don't modify the Ruby load path (`$LOAD_PATH`). This impact the shared environment extensions use.
 - If your extension is going to be encrypted (Default on Extension Warehouse), you _must_ use `Sketchup.require` to load the files in your extension. You can continue to use the normal `require` for the Ruby standard library etc. But when you encrypt your extension all `.rb` files in your RBZ package is replaced by `.rbe` files. So remember to omit the file extension when using `Sketchup.require`. SketchUp will resolve the file extension from the base name first trying `.rbe` then `.rb`.
 
+## SketchUp Fundamentals
+
+### Coordinate System
+
+SketchUp uses a right-handed coordinate system where **Z is up**. The axes are: X (red) = right, Y (green) = forward/into screen, Z (blue) = up. Do not confuse this with Y-up systems used by some other 3D applications.
+
+### Units
+
+SketchUp's internal unit is **inches**. All geometric values (points, vectors, distances) are stored in inches internally. The `Length` class handles display formatting — `Length#to_s` formats the value to the user's chosen model units (e.g., millimeters, meters, feet).
+
+Use SketchUp's helper methods on `Numeric`, `String`, `Array`, and `Length` for unit conversions rather than manual arithmetic:
+- `10.mm` — converts 10 millimeters to inches (internal unit).
+- `45.degrees` — converts 45 degrees to radians (used by the API for angles).
+- `"2m".to_l` — parses a string with units into a `Length` in inches.
+See the full list of helpers in the SketchUp Ruby API documentation for `Numeric`, `String`, `Array`, and `Length`.
+
 ## Best practices
 
 - When starting operations, disable UI updates for the span of the operation by setting the second argument: `model.start_operation('Create Cube', true)`.
@@ -72,11 +88,15 @@ More information: https://ruby.sketchup.com/file.extension_requirements.html
 ### Documentation
 
 - YARD documentation: add `@param` and `@return` tags for methods with meaningful return values. Do not add `@return [void]` — omit `@return` when the return value is not used.
+- For instance variables, use YARD type annotations indicating contents: e.g., `@return [Array<Geom::Point3d>]` for arrays, `@return [Hash{String => Integer}]` for hashes. For variables initialized to `nil`, annotate with the type they will hold: e.g., `@return [Geom::Point3d, nil]`.
+- Comments should use proper sentences with capitalization and punctuation.
 
 ### Coding pattern
 
 - Important! Don't add `try`/`catch` unless you are highly confident that an error can reasonably be expected and you have some way to recover usefully. Bad example: catch "maybe errors" and ignore or print to Ruby Console. The error is still essentially unhandled, let the normal error mechanisms propagate. Good example: Attempt to read a file, handle exceptions related to reading/accessing the file because file operations are actions where you can reasonable expect a failure and do something useful such as inform the user.
 - Important! Don't check for `nil` unless you are highly confident that is a possibility. If the program logic doesn't expect `nil` then it would be a bug to see `nil` and the application/extension is better of throwing an error instead of silently ignoring it. Fail early on unmet program expectations.
+- Avoid magic values. Introduce constants that provide semantic meaning (e.g., `PADDING = 4` instead of a bare `4`).
+- Keep related data grouped as a single object. For 2D/3D coordinates, store them as `Geom::Point3d` (or `Geom::Point2d`) rather than separate `x`, `y`, `z` variables. Prefer `Geom::Point3d` even for 2D use cases, as most SketchUp API methods expect 3D points. Use plain arrays only when no suitable object type exists.
 
 ### Code Organization
 
@@ -110,6 +130,7 @@ More information: https://ruby.sketchup.com/file.extension_requirements.html
 - Always call `view.invalidate` in both `deactivate` and `suspend` callbacks, in addition to the other callbacks that modify state. This is flagged by the `SketchupSuggestions/ToolInvalidate` RuboCop cop.
 - For multi-step input: use a second `Sketchup::InputPoint` as a guide and pass it to the primary InputPoint's `pick` method for snapping inference. Copy the primary InputPoint to the guide after each accepted click.
 - When `InputPoint` may not snap to geometry (e.g., looking top-down during a height pick), fall back to projecting the mouse ray onto the constraint axis using `view.pickray` and `Geom.closest_points`.
+- Update the statusbar text (`Sketchup.status_text=`) whenever the tool state changes. The statusbar should tell the user what action to take next (e.g., "Click to set the start point", "Click to set the end point").
 - In `onCancel`, check the `reason` parameter: `0` = ESC key, `1` = reactivate, `2` = undo. ESC should typically step back one state; other reasons should fully reset the tool.
 - `view.invalidate` is meant to be used from within a `Sketchup::Tool` to signal that the view should redraw. If you find yourself using this outside of a tool to trigger a refresh it's an indication of a bug in SketchUp and we ask you to log a bug report.
 - Use `view.invalidate` instead of `view.refresh`. `view.refresh` forces a redraw and can lead to poor performance and other bad side effects. Don't use unless you have a really good reason to workaround some viewport update issues.
