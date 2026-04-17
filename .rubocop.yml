@@ -53,3 +53,8 @@ SketchupSuggestions:
 
 SketchupBugs:
   Enabled: true
+
+# YARD department
+
+YARD:
+  Enabled: true
