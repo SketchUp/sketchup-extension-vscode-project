@@ -1,5 +1,6 @@
 plugins:
   - rubocop-sketchup
+  - rubocop-yard
 
 # If you want to use the same coding pattern as SketchUp's projects, enable
 # the next line. RuboCop will then use the coding pattern from the
@@ -28,10 +29,10 @@ AllCops:
     SourcePath: src
     TargetSketchUpVersion: 2021
     Exclude: # Exclude common folders.
-    - profiling/
-    - skippy/
-    - tests/
-    - tools/
+    - profiling/**/*
+    - skippy/**/*
+    - tests/**/*
+    - tools/**/*
   TargetRubyVersion: 2.7 # SketchUp 2021 uses Ruby 2.7.
 
 
