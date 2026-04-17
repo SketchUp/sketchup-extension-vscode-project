@@ -1,4 +1,5 @@
 {
+  "ruby.rake.autoDetect": "off",
   "solargraph.diagnostics": true,
   "cSpell.words": [
     "Commonmarker",
