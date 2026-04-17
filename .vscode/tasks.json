@@ -1,4 +1,4 @@
-  {
+{
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "2.0.0",
@@ -10,6 +10,33 @@
         "args": [
           "sketchup:debug",
           "${input:sketchupVersion}"
+        ],
+        "runOptions": {
+          "reevaluateOnRerun": false
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Launch SketchUp with Bridge",
+        "type": "shell",
+        "command": "ruby",
+        "args": [
+          "tools/launch-sketchup.rb",
+          "${input:sketchupVersion}"
+        ],
+        "runOptions": {
+          "reevaluateOnRerun": false
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Launch SketchUp with Bridge + Debug",
+        "type": "shell",
+        "command": "ruby",
+        "args": [
+          "tools/launch-sketchup.rb",
+          "${input:sketchupVersion}",
+          "--debug"
         ],
         "runOptions": {
           "reevaluateOnRerun": false
