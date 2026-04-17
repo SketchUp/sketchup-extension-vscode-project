@@ -6,6 +6,10 @@ paths:
 
 # Ruby Code Style
 
+## Naming
+
+Use full, human-readable names. Don't use abbreviations unless very common (e.g. `ui`, `id`). Prefer `transformation` over `tr`, `expected_point` over `exp_pt`.
+
 ## Coding pattern
 
 - Important! Don't add `try`/`catch` unless you are highly confident that an error can reasonably be expected and you have some way to recover usefully. Bad example: catch "maybe errors" and ignore or print to Ruby Console. The error is still essentially unhandled, let the normal error mechanisms propagate. Good example: Attempt to read a file, handle exceptions related to reading/accessing the file because file operations are actions where you can reasonable expect a failure and do something useful such as inform the user.
