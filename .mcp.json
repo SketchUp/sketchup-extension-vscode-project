@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "sketchup-bridge": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["tools/sketchup-bridge/mcp_server.py"]
+    },
+    "rubocop": {
+      "type": "stdio",
+      "command": "bundle",
+      "args": ["exec", "rubocop", "--mcp"]
+    }
+  }
+}
