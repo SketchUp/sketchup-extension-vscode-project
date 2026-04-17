@@ -1,5 +1,5 @@
 # Launches SketchUp with the eval bridge for Claude Code integration.
-# Usage: ruby tools/launch-sketchup.rb [version] [--debug]
+# Usage: ruby tools/sketchup-bridge/launch.rb [version] [--debug]
 
 version = '2026'
 debug_mode = false
@@ -11,7 +11,7 @@ ARGV.each do |arg|
   end
 end
 
-bridge_script = File.expand_path('sketchup-bridge.rb', __dir__)
+bridge_script = File.expand_path('server.rb', __dir__)
 
 extra_args = %(-RubyStartup "#{bridge_script}")
 extra_args = %(-rdebug "ide port=7000" #{extra_args}) if debug_mode

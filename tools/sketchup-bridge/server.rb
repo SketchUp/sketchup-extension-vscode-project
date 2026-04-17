@@ -12,7 +12,7 @@ require 'thread'
 module SketchUpBridge
 
   PORT = 7200
-  POLL_INTERVAL = 0.05 # seconds
+  POLL_INTERVAL = 0.01 # 10ms — UI.start_timer minimum effective interval
   MAX_RESULT_LENGTH = 50_000
 
   @queue = Queue.new
@@ -30,6 +30,8 @@ module SketchUpBridge
       end
     end
 
+    # UI.start_timer must be called from the main thread.
+    # Poll the queue from a repeating timer.
     UI.start_timer(POLL_INTERVAL, true) { process_queue }
     puts "SketchUpBridge: listening on port #{PORT}"
   rescue Errno::EADDRINUSE
