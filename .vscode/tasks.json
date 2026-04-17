@@ -26,7 +26,7 @@
       "type": "shell",
       "command": "ruby",
       "args": [
-        "tools/launch-sketchup.rb",
+        "tools/sketchup-bridge/launch.rb",
         "${input:sketchupVersion}"
       ],
       "runOptions": {
@@ -39,7 +39,7 @@
       "type": "shell",
       "command": "ruby",
       "args": [
-        "tools/launch-sketchup.rb",
+        "tools/sketchup-bridge/launch.rb",
         "${input:sketchupVersion}",
         "--debug"
       ],

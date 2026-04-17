@@ -1,8 +1,8 @@
 # Client for the SketchUp eval bridge.
 # Usage:
-#   ruby tools/sketchup-bridge-client.rb "expression"
-#   echo "expression" | ruby tools/sketchup-bridge-client.rb
-#   ruby tools/sketchup-bridge-client.rb < script.rb
+#   ruby tools/sketchup-bridge/client.rb "expression"
+#   echo "expression" | ruby tools/sketchup-bridge/client.rb
+#   ruby tools/sketchup-bridge/client.rb < script.rb
 
 require 'json'
 require 'socket'
