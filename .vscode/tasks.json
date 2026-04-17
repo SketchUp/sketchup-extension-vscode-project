@@ -20,6 +20,33 @@
         "reevaluateOnRerun": false
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Launch SketchUp with Bridge",
+      "type": "shell",
+      "command": "ruby",
+      "args": [
+        "tools/launch-sketchup.rb",
+        "${input:sketchupVersion}"
+      ],
+      "runOptions": {
+        "reevaluateOnRerun": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Launch SketchUp with Bridge + Debug",
+      "type": "shell",
+      "command": "ruby",
+      "args": [
+        "tools/launch-sketchup.rb",
+        "${input:sketchupVersion}",
+        "--debug"
+      ],
+      "runOptions": {
+        "reevaluateOnRerun": false
+      },
+      "problemMatcher": []
     }
   ],
   "inputs": [
