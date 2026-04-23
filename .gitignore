@@ -9,6 +9,7 @@ Backup of *.layout
 # RuboCop
 .rubocop-https-*-yml
 .rubocop-remote-*.yml
+.rubocop_cache
 
 # YARD
 /.yardoc
@@ -19,3 +20,6 @@ Backup of *.layout
 
 # Bundler
 Gemfile.lock
+
+# Claude
+.claude/settings.local.json
