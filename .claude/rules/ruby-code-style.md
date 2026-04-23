@@ -21,6 +21,7 @@ Use full, human-readable names. Don't use abbreviations unless very common (e.g.
 
 - Use `Sketchup.require` with paths relative to the extension root (e.g., `Sketchup.require('my_extension/some_file')`), not `__dir__`. Using `__dir__` has encoding issues on Windows with non-ASCII paths.
 - Place `Sketchup.require`/`require` statements at the top of the file, Ruby standard library first, then extension files, in alphabetical order.
+- Use `require` and `require_relative` for requiring files that are not part of the extension (e.g., Ruby standard library, gems).
 
 ## Documentation
 

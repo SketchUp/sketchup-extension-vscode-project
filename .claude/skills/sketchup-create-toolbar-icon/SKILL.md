@@ -11,8 +11,8 @@ SketchUp extensions distribute to both Windows and macOS users. Each platform us
 
 - **Windows:** `.svg`
 - **macOS:** `.pdf`
-- **Large icons:** 32x32 with a 4px empty padding
-- **Small icons:** 24x24 with a 4px empty padding
+- **Large icons:** 32x32 including 4px empty padding between artwork and image edge.
+- **Small icons:** 24x24 including 4px empty padding between artwork and image edge.
 
 Both formats should be shipped with the extension. Write a small utility that picks the right extension at runtime and reuse it for each command.
 
