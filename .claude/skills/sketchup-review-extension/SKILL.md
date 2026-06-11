@@ -288,7 +288,7 @@ Note: Your copyright year is outdated.
 #### Dynamic copyright year
 If copyright year is `Time.now.year`
 ```
-Note: Prefer hardcoing the copyright year. Showing the current year can lead to confusion of what version the user is actually on.
+Note: Prefer hardcoding the copyright year. Showing the current year can lead to confusion of what version the user is actually on.
 ```
 
 #### SketchUp version compatibility check in root rb
@@ -339,7 +339,7 @@ Note: It's recommended to do the license check inside of a core business method 
 
 #### Silent rescue
 `rescue` that swallows exceptions without logging or re-raising.
-**Exception:** `rescue` blocks that print to the console ARE acceptable (see R7 exception).
+**Exception:** `rescue` blocks that print to the console ARE acceptable (see Console printing exception).
 **Exception:** Rescuing `ArgumentError` (or similar) when setting rendering options to skip keys unsupported in the current SketchUp version is acceptable and should NOT be flagged.
 ```
 Note: Avoid rescuing without doing anything with the error. Rescuing silently only hides potential bugs. It's better to not rescue at all and have the exception printed to the Ruby console. You may also use a UI.messagebox to display the error to the user.
