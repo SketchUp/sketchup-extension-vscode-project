@@ -7,21 +7,26 @@ Review a SketchUp extension for Extension Warehouse compliance.
 
 ## Inputs
 
-| Input | Path | Description |
-|---|---|---|
-| Source code | `src/` | Extracted extension files |
-| RuboCop results | `rubocop-results.json` | RuboCop-SketchUp static analysis (may be absent) |
+| Input       | Path                                                     | Description |
+|-------------|----------------------------------------------------------|---|
+| Source code | `SketchUp/SourcePath` in `.rubocop.yml` (default `src/`) | The extension source files in this workspace |
 
 ## Output
 
-Write the review to `review_report.txt`. Nothing else.
+Report the review directly in the chat, in the output format specified below.
 
 ## Workflow
 
-1. Read `rubocop-results.json`.
-2. List all files under `src/`. Read every Ruby file, JS file and HTML file.
-3. Evaluate the rules below.
-4. Write `review_report.txt` in the exact output format specified.
+1. Determine the source path from `SketchUp/SourcePath` in `.rubocop.yml`. Fall back to `src/` if the config or key is absent.
+2. Run RuboCop-SketchUp static analysis: `bundle exec rubocop --format json`.
+   - If RuboCop is not available (e.g. `bundle install` has not been run), skip this step, note it in the output, and continue with the manual review.
+3. List all files under the source path. Read every Ruby file, JS file and HTML file.
+4. Evaluate the rules below.
+5. Report the review in the chat, in the exact output format specified.
+
+## RuboCop Results
+
+If the RuboCop run succeeded, incorporate its findings. RuboCop offenses with `severity: "error"` and cop names starting with `SketchupRequirements/` map to rejections. Cross-reference with the rules below to use the correct wording. Don't duplicate — if RuboCop flags something already caught by your manual review, mention it once.
 
 ## Developer Feedback
 
@@ -32,7 +37,7 @@ Evaluate every rule below against the code. Each rule is either a **Rejection** 
 These block publishing. Use the exact wording provided, substituting placeholders.
 
 #### Root file does too much
-The root `.rb` file - the one .rb file directly in src/ - should ONLY register the SketchupExtension. No business logic, no loading other files beyond the single support file referenced by the SketchupExtension object, no `require` of gems or stdlib, no file I/O. If the user chooses to disable the extension in Extension Manager, no other code should run.
+The root `.rb` file - the one .rb file directly in the source path (see Workflow step 1) - should ONLY register the SketchupExtension. No business logic, no loading other files beyond the single support file referenced by the SketchupExtension object, no `require` of gems or stdlib, no file I/O. If the user chooses to disable the extension in Extension Manager, no other code should run.
 **Exception:** The root `.rb` may load the extension data from a `.json` file.
 **Exception:** The root may define constants.
 **Exception:** The root may require "sketchup.rb" and "extension.rb"
@@ -135,18 +140,6 @@ html = "<div>#{CGI.escape_html(name)}</div>"
 element.textContent = userProvidedValue
 ```
 
-#### RubyEncoder obfuscation
-Source files contain RubyEncoder markers or other obfuscation.
-```
-Rejection: RubyEncoder obfuscation prevents review of the source code. Please submit without obfuscating the code.
-```
-
-#### Obfuscated or minified JavaScript
-JavaScript files that are intentionally obfuscated (e.g. hexadecimal variable names, encoded string arrays, control flow flattening) or minified beyond readability, preventing security review.
-```
-Rejection: The JavaScript code is obfuscated/minified and cannot be reviewed for security. Please either submit readable JavaScript source code, or host the web page on your server and use set_url instead of set_file so the HTML content is sandboxed and not part of the review.
-```
-
 #### eval usage
 `eval`, `instance_eval`, `class_eval`, `module_eval`, `Binding#eval` on untrusted input.
 ```
@@ -193,7 +186,7 @@ https://ruby.sketchup.com/file.extension_requirements.html#label-24LOAD_PATH
 ```
 Rejection: Don't modify environment variables. Doing so can cause other extensions to malfunction.
 https://ruby.sketchup.com/file.extension_requirements.html#label-Environment+Variables
-``` 
+```
 
 #### Using exit/exit!
 ```
@@ -377,14 +370,9 @@ Note: Avoid underscore in extension titles. Underscore is used in code, not in u
 
 ---
 
-## RuboCop Results
-
-If `rubocop-results.json` exists, incorporate its findings. RuboCop offenses with `severity: "error"` and cop names starting with `SketchupRequirements/` map to rejections. Cross-reference with the rules above to use the correct wording. Don't duplicate — if RuboCop flags something already caught by your manual review, mention it once.
----
-
 ## Output Format
 
-Write `review_report.txt` in exactly this structure:
+Report the review in the chat using exactly this structure:
 
 Each rejection or note as its own paragraph, most severe first.
 Use the exact template wording. Rejections above notes.
