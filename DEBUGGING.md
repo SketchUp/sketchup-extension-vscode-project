@@ -68,6 +68,27 @@ stdout, which in SketchUp means **the Ruby Console**:
 So if a conditional breakpoint never triggers, check the Ruby Console before
 assuming the condition was simply false.
 
+### Log points, hit counts and editing variables
+
+VSCode reports that the debugger does not support log points. That is an upstream
+`ruby/debug` limitation rather than anything specific to SketchUp — the gem does
+not advertise the `supportsLogPoints` capability in any version, so upgrading it
+will not help. The same applies to hit counts
+(`supportsHitConditionalBreakpoints`) and to changing a value from the Variables
+pane (`supportsSetVariable`).
+
+A conditional breakpoint covers the log point case, because the condition is
+evaluated every time the line runs and only suspends when the result is truthy.
+Log from the condition and make it evaluate to false:
+
+```ruby
+(puts("face=#{face.inspect}"); false)
+```
+
+The output goes to the Ruby Console, as with any `puts` from an extension. Note
+`puts` already returns `nil`, so the explicit `false` is only needed when what you
+are logging would itself evaluate truthy.
+
 The launcher uses two SketchUp command line switches, so nothing has to be copied
 into the Plugins folder:
 
