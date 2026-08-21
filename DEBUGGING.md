@@ -49,6 +49,25 @@ to render as solid rather than hollow before triggering the code you want to sto
 in. If you invoke it too quickly after pressing <kbd>F5</kbd> it can look as though
 the breakpoint was ignored.
 
+### Conditional breakpoints
+
+The condition is a bare Ruby *expression*, not a statement — `face.nil?`, not
+`if face.nil?`. The latter is incomplete Ruby and fails to parse.
+
+A condition that raises or does not parse makes the breakpoint silently never
+fire: the debug gem treats the failed evaluation as false. VSCode still shows the
+breakpoint as verified, so there is no hint in the editor. The error is reported to
+stdout, which in SketchUp means **the Ruby Console**:
+
+```
+[EVAL ERROR]
+  expr: if face.nil?
+  err: (eval):1: syntax error, unexpected end-of-input, expecting `then' or ';' or '\n'
+```
+
+So if a conditional breakpoint never triggers, check the Ruby Console before
+assuming the condition was simply false.
+
 The launcher uses two SketchUp command line switches, so nothing has to be copied
 into the Plugins folder:
 
