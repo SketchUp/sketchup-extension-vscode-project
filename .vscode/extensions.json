@@ -9,8 +9,9 @@
     // Will make VSCode pick up .editorconfig.
     "editorconfig.editorconfig",
 
-    // Essential for Ruby syntax highlighting and debugging.
-    "rebornix.ruby",
+    // Ruby language support and the debugger used to attach to SketchUp.
+    // Replaces the deprecated `rebornix.ruby` extension.
+    "shopify.ruby-lsp",
 
     // For code insight and auto-complete.
     "castwide.solargraph"

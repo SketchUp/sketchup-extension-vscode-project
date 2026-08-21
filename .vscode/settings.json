@@ -1,6 +1,25 @@
 {
   "ruby.rake.autoDetect": "off",
   "solargraph.diagnostics": true,
+
+  // Ruby LSP runs its language server in a Ruby of its own choosing. Its default
+  // `auto` mode looks for a supported version manager and reports errors when it
+  // cannot find one, which is what happens on Windows unless you use one of the
+  // managers it knows about. `none` means "use whatever `ruby` is on PATH", which
+  // keeps this file free of machine specific paths.
+  //
+  // That Ruby needs to be 3.2 or newer, matching SketchUp 2024 and later. If your
+  // default Ruby is older, point Ruby LSP at a newer one in your *user* settings
+  // rather than here, for example on Windows:
+  //
+  //   "rubyLsp.rubyVersionManager": { "identifier": "custom" },
+  //   "rubyLsp.customRubyCommand": "set PATH=<path to your Ruby>\\bin;%PATH%"
+  //
+  // This only affects language features. Debugging attaches over TCP and does not
+  // depend on it. See DEBUGGING.md.
+  "rubyLsp.rubyVersionManager": {
+    "identifier": "none"
+  },
   "cSpell.words": [
     "Commonmarker",
     "RuboCop",

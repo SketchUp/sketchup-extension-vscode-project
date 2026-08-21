@@ -49,26 +49,36 @@ You might want to adjust this configuration file to suit your own coding style. 
 
 ![](https://github.com/SketchUp/sketchup-ruby-api-tutorials/wiki/images/VSCode/VSCodeDebugging.gif)
 
-**Note:** _Make sure you have [installed the required debugger](https://github.com/SketchUp/sketchup-ruby-api-tutorials/wiki/VSCode-Debugger-Setup#preparing-sketchup) dll/dylib to enable debugging in SketchUp._
+Debugging uses the [Ruby LSP][ruby-lsp] extension and the `debug` gem that
+SketchUp bundles. No debugger dll/dylib is needed, and nothing has to be
+installed into SketchUp — the launcher passes the debug bootstrap to SketchUp via
+its `-RubyStartup` command line switch. See **[DEBUGGING.md](DEBUGGING.md)** for
+the details, including how to debug extension *startup*.
+
+Requires SketchUp 2024 or newer.
 
 You also need to make sure you are [loading the extension](https://github.com/SketchUp/sketchup-ruby-api-tutorials#loading-directly-from-the-repository) directly from your project's directory.
 
-A visual guide is available in our [tutorials repository](https://code.visualstudio.com/docs/editor/debugging).
-
-The short version is condensed here:
+The short version:
 
 1. Set break points in the gutter bar next to the line numbers in the editor.
 2. `View > Command Palette` (`Ctrl+Shift+P`)
 3. Start typing `task`
 4. Pick `Tasks: Run Task`
-5. Pick `Launch SketchUp in Ruby debug mode`
-5. Pick the version of SketchUp to launch (e.g. `2022`)
-6. Wait for SketchUp to launch.
-7. Go to the Debug tab in VSCode (`Ctrl+Shift+D`)
-8. Pick `Listen for rdebug-ide` in the drop-down.
-9. Click the `Start Debugging` button.
+5. Pick `Launch SketchUp for debugging`
+6. Pick the version of SketchUp to launch (e.g. `2026`)
+7. Wait for SketchUp to launch.
+8. Go to the Debug tab in VSCode (`Ctrl+Shift+D`)
+9. Pick `Attach to SketchUp` in the drop-down.
+10. Click the `Start Debugging` button.
 
-More details: https://github.com/SketchUp/sketchup-ruby-api-tutorials/wiki/VSCode-Debugger-Setup
+For SketchUp 2023 and older, use a commit from before this project dropped
+support for them. Those versions do not bundle the `debug` gem and need the
+[SketchUp Ruby Debugger][su-debugger] dll/dylib with the deprecated
+`rebornix.ruby` extension.
+
+[ruby-lsp]: https://github.com/Shopify/ruby-lsp
+[su-debugger]: https://github.com/SketchUp/sketchup-ruby-debugger
 
 ## Further Reading
 

@@ -26,12 +26,13 @@ AllCops:
   - src/*/vendor/**/* # Exclude skippy vendor folder
   SketchUp:
     SourcePath: src
-    TargetSketchUpVersion: 2021
+    TargetSketchUpVersion: 2024
     Exclude: # Exclude common folders.
-    - profiling/
-    - skippy/
-    - tests/
-  TargetRubyVersion: 2.7 # SketchUp 2021 uses Ruby 2.7.
+    - profiling/**/*
+    - skippy/**/*
+    - tests/**/*
+    - tools/**/*
+  TargetRubyVersion: 3.2 # SketchUp 2024 uses Ruby 3.2.
 
 
 # If DisabledByDefault is set to true then we need to enable the SketchUp

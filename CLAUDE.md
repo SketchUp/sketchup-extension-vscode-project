@@ -27,8 +27,8 @@ bundle exec rubocop
 # Generate YARD documentation (uses Markdown syntax)
 bundle exec yard doc
 
-# Launch SketchUp in debug mode (via skippy)
-skippy sketchup:debug <version>   # e.g., skippy sketchup:debug 2026
+# Launch SketchUp with the Ruby debugger enabled
+ruby tools/debug-sketchup.rb <version> [port]   # e.g., ruby tools/debug-sketchup.rb 2026 7000
 ```
 
 ## Architecture
@@ -50,4 +50,21 @@ Tests use the [TestUp](https://github.com/SketchUp/testup-2) framework (`TestUp:
 
 ### Debugging
 
-VSCode is configured to attach to SketchUp's Ruby debugger (`rdebug-ide`) on port 7000. The workflow: launch SketchUp in debug mode via the VSCode task, then attach using the "Listen for rdebug-ide" launch configuration. Requires the [SketchUp Ruby Debugger](https://github.com/SketchUp/sketchup-ruby-debugger) dll/dylib installed in SketchUp.
+See [DEBUGGING.md](DEBUGGING.md) for the full setup and rationale.
+
+Debugging uses the `debug` gem (ruby/debug) that SketchUp bundles, over the Debug Adapter Protocol, with the Ruby LSP extension (`shopify.ruby-lsp`). The workflow: run the "Launch SketchUp for debugging" task, then attach with the "Attach to SketchUp" launch configuration on port 7000. No debugger dll/dylib is needed, and nothing is installed into SketchUp — the launcher passes `tools/su_debug_bootstrap.rb` via SketchUp's `-RubyStartup` switch.
+
+The port reaches the bootstrap through `-RubyStartupArg "su_debug:port=7000"`, which SketchUp appends to Ruby's `ARGV`, so no environment variable is needed. `RUBY_DEBUG_PORT`/`RUBY_DEBUG_WAIT` still work as an alternative, which matters because SketchUp only honours the last `-RubyStartupArg` and TestUp also uses that switch.
+
+SketchUp runs the `-RubyStartup` file *after* loading extensions, so to debug extension startup the bootstrap has to be installed in the Plugins folder and launched with `wait=1` instead.
+
+Only Windows has been verified. The macOS launch path is untested.
+
+Two SketchUp-specific workarounds live in that bootstrap, and both are needed — do not remove them:
+
+- `DEBUGGER__::CONFIG[:local_fs_map] = true`. Over TCP the `debug` gem does not assume the client shares its filesystem, and rejects every `setBreakpoints` request with "`<path>` is not available". Without this, breakpoints set in the editor never bind and only `binding.break` works.
+- A `UI.start_timer(0.1, true) { Thread.pass }` pump. SketchUp only runs the Ruby VM while executing Ruby, and holds the GVL while idle, so the debug gem's server threads are otherwise never scheduled — the port accepts connections but no DAP request is ever answered.
+
+This project targets SketchUp 2024 and newer, which is the oldest version bundling the `debug` gem. SketchUp 2023 and older need the [SketchUp Ruby Debugger](https://github.com/SketchUp/sketchup-ruby-debugger) dll/dylib with the older `rdebug-ide` protocol — use a commit from before support was dropped.
+
+If a SketchUp version does not bundle the `debug` gem, the bootstrap detects this and logs that the gem is unavailable instead of failing.

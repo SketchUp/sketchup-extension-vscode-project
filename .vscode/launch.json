@@ -5,14 +5,20 @@
   "version": "0.2.0",
   "configurations": [
 
+    // Uses the `debug` gem (ruby/debug) that SketchUp bundles, via the Debug
+    // Adapter Protocol. Start SketchUp with the "Launch SketchUp for debugging"
+    // task first - that passes tools/su_debug_bootstrap.rb to SketchUp, which
+    // opens the debug server on the port below. See DEBUGGING.md.
     {
-      "name": "Listen for rdebug-ide",
-      "type": "Ruby",
+      "name": "Attach to SketchUp",
+      "type": "ruby_lsp",
       "request": "attach",
-      "cwd": "${workspaceRoot}",
-      "remoteHost": "127.0.0.1",
-      "remotePort": "7000",
-      "remoteWorkspaceRoot": "${workspaceRoot}"
+      "debugHost": "127.0.0.1",
+      "debugPort": 7000,
+      // Required for TCP attach. The debug gem only assumes a shared
+      // filesystem for Unix domain sockets; over TCP it refuses to bind
+      // breakpoints unless told the client shares its filesystem.
+      "localfs": true
     }
   ]
 }
