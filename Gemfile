@@ -13,7 +13,6 @@ group :development do
   gem 'sketchup-api-stubs'       # VSCode SketchUp Ruby API insight
   gem 'skippy', '~> 0.5.3.a'     # Aid with common SketchUp extension tasks.
   gem 'solargraph'               # VSCode Ruby IDE support
-  gem 'rake'
 end
 
 group :documentation do

@@ -17,7 +17,6 @@ AllCops:
 
   SuggestExtensions:
     rubocop-minitest: false # Only used to aid IDE code insight
-    rubocop-rake: false
 
   DisplayCopNames: true
   DisplayStyleGuide: true

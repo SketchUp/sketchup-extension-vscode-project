@@ -1,5 +1,4 @@
 {
-  "ruby.rake.autoDetect": "off",
   "solargraph.diagnostics": true,
 
   // Ruby LSP runs its language server in a Ruby of its own choosing. Its default
