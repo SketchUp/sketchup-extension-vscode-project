@@ -8,11 +8,16 @@
   // keeps this file free of machine specific paths.
   //
   // That Ruby needs to be 3.2 or newer, matching SketchUp 2024 and later. If your
-  // default Ruby is older, point Ruby LSP at a newer one in your *user* settings
-  // rather than here, for example on Windows:
+  // default Ruby is older, or if a version manager puts batch shims ahead of it on
+  // PATH, point Ruby LSP at a specific interpreter in your *user* settings:
   //
-  //   "rubyLsp.rubyVersionManager": { "identifier": "custom" },
-  //   "rubyLsp.customRubyCommand": "set PATH=<path to your Ruby>\\bin;%PATH%"
+  //   "rubyLsp.rubyExecutablePath": "C:\\Ruby34-x64\\bin\\ruby.exe"
+  //
+  // Use `rubyLsp.rubyExecutablePath` rather than overriding
+  // `rubyLsp.rubyVersionManager`: the manager setting is set below at *workspace*
+  // scope, which takes precedence over user settings, so a user-level override of
+  // it would be ignored. `rubyExecutablePath` is declared `scope: machine`, so it
+  // can only be set per machine and this file never shadows it.
   //
   // This only affects language features. Debugging attaches over TCP and does not
   // depend on it. See DEBUGGING.md.
