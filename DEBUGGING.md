@@ -93,7 +93,7 @@ The launcher uses two SketchUp command line switches, so nothing has to be copie
 into the Plugins folder:
 
 ```sh
-SketchUp.exe -RubyStartup "<repo>/tools/su_debug_bootstrap.rb" -RubyStartupArg "su_debug:port=7000"
+SketchUp.exe -RubyStartup "<repo>/tools/su_debug_bootstrap.rb" -RubyStartupArg "su_debug:port=7150"
 ```
 
 `-RubyStartup <file>` runs a Ruby file at startup. `-RubyStartupArg <string>` is
@@ -106,10 +106,52 @@ variables as an alternative. Those are worth knowing about because SketchUp only
 honours the **last** `-RubyStartupArg`, so the switch is unusable if something else
 already needs it — TestUp uses it for its CI mode.
 
-> **macOS is currently untested.** The launcher uses
-> `open -n -a "<app>" --args -RubyStartup … -RubyStartupArg …` (arguments must
-> follow `--args`, and `-n` forces a new instance so the arguments are not
-> silently dropped onto an already running SketchUp). Verify before relying on it.
+### macOS
+
+The switches behave the same as on Windows, but the launcher has to work around two
+defects in how SketchUp packages its macOS Ruby. Both are handled automatically; this
+is here so the workarounds are not mistaken for clutter and removed.
+
+SketchUp must be started through `open`:
+
+```sh
+open -n -a "<app>" --env "DYLD_LIBRARY_PATH=<app>/Contents/Frameworks/Ruby.framework/Versions/Current" \
+  --args -RubyStartup "<repo>/tools/su_debug_bootstrap.rb" -RubyStartupArg "su_debug:port=7150"
+```
+
+Executing `<app>/Contents/MacOS/SketchUp` directly does **not** run the
+`-RubyStartup` file — macOS reads these switches through `NSUserDefaults` rather than
+by parsing the command line. Arguments must follow `--args`, and `-n` forces a new
+instance, or `open` merely activates a running SketchUp and drops the arguments.
+
+**`DYLD_LIBRARY_PATH` (SKEXT-5430).** The bundled `debug` gem's native extension is
+linked against `@executable_path/../lib/libruby.<major>.<minor>.dylib`, which
+SketchUp's packaging removes when it repackages Ruby as a framework. Without this,
+`require 'debug/session'` fails and the bootstrap logs the gem as unavailable even
+though it is present. Pointing dyld at `Versions/Current` resolves it to the
+already-loaded `Ruby` binary via a matching symlink; that directory holds only `Ruby`
+and those symlinks, so nothing else can be shadowed. It has to be passed with
+`--env` because `open` strips `DYLD_*`, which needs macOS 13 or newer.
+
+**A stub `irb/completion` (SKEXT-5431).** SketchUp's macOS Ruby installs no irb
+library at all — the irb gem ships only `exe/irb` — while the `debug` gem's
+`server_dap.rb` opens with an unconditional `require 'irb/completion'`. Because that
+require only runs when a debugger client connects, the `LoadError` kills the debug
+gem's reader thread mid-handshake, and the client sees a connection that is accepted
+and never answered. That is indistinguishable from the GVL problem described below,
+so check the bootstrap log before assuming the thread pump is at fault. The bootstrap
+loads the DAP server up front, falling back to
+[`tools/irb_stub/irb/completion.rb`](tools/irb_stub/irb/completion.rb) when irb is
+missing, so any failure is reported in the log instead of during an attach. Only the
+Debug Console's autocomplete depends on it; breakpoints, stepping and inspection are
+unaffected.
+
+Because the stub is found relative to the bootstrap, prefer a **symlink** over a copy
+if you install the bootstrap into the Plugins folder, so `tools/irb_stub` stays
+reachable.
+
+Verified on macOS 26.6.1 (arm64) against SketchUp 2026 (26.2.242): the handshake
+completes and a breakpoint set by path reports `verified`.
 
 ### Debugging extension startup
 
@@ -130,11 +172,11 @@ sorts before your own extension's loader if you need to break during that load.
 Then launch with:
 
 ```sh
-SketchUp.exe -RubyStartupArg "su_debug:port=7000,wait=1"
+SketchUp.exe -RubyStartupArg "su_debug:port=7150,wait=1"
 ```
 
 `-RubyStartupArg` still works here, because it is passed to Ruby before extensions
-are loaded. `RUBY_DEBUG_PORT=7000` plus `RUBY_DEBUG_WAIT=1` does the same thing.
+are loaded. `RUBY_DEBUG_PORT=7150` plus `RUBY_DEBUG_WAIT=1` does the same thing.
 
 The bootstrap does nothing unless a port is configured, so it is safe to leave
 installed permanently. With `wait=1` SketchUp blocks and appears frozen until you
@@ -209,7 +251,7 @@ actively maintained. Its `ruby_lsp` debug type supports TCP attach through
 DAP straight to the gem, with no adapter in between.
 
 The alternative [vscode-rdbg][vscode-rdbg] extension (`type: "rdbg"`) also works
-and its attach config is `"debugPort": "127.0.0.1:7000"` plus `"localfs": true`,
+and its attach config is `"debugPort": "127.0.0.1:7150"` plus `"localfs": true`,
 but it has had no release since December 2023.
 
 [ruby-debug]: https://github.com/ruby/debug

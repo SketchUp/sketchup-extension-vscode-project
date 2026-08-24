@@ -20,8 +20,12 @@
 
 OLDEST_SUPPORTED = 2024
 
+# Avoid 7000: macOS AirPlay Receiver listens there, and 7000-7009 is the
+# registered AFS range, so the debug server cannot bind it.
+DEFAULT_PORT = '7150'
+
 raw_version = ARGV[0].to_s
-port = (ARGV[1] || ENV['RUBY_DEBUG_PORT'] || '7000').to_s
+port = (ARGV[1] || ENV['RUBY_DEBUG_PORT'] || DEFAULT_PORT).to_s
 
 if raw_version.empty?
   warn 'Usage: ruby tools/debug-sketchup.rb <version> [port]'
@@ -47,7 +51,14 @@ end
 mac = RUBY_PLATFORM.include?('darwin')
 
 if mac
-  sketchup = "/Applications/SketchUp #{year}/SketchUp.app"
+  # The installer default is /Applications, but macOS also allows a per-user
+  # install under ~/Applications, which is what a locked down machine may end up
+  # with. Prefer the system location when both exist.
+  candidates = [
+    "/Applications/SketchUp #{year}/SketchUp.app",
+    File.expand_path("~/Applications/SketchUp #{year}/SketchUp.app")
+  ]
+  sketchup = candidates.find { |path| File.exist?(path) } || candidates.first
 else
   program_files_32 = ENV['ProgramFiles(x86)'] || 'C:/Program Files (x86)'
   program_files_64 = ENV['ProgramW6432'] || 'C:/Program Files'
@@ -76,12 +87,38 @@ startup_arg = "su_debug:port=#{port}"
 
 # Pass arguments as an array so paths containing spaces need no quoting.
 if mac
-  # Arguments must come after `--args`, or `open` interprets them itself. `-n`
-  # forces a new instance: without it, `open` would just activate an already
-  # running SketchUp and the arguments would be silently ignored.
-  # NOTE: The macOS path is untested - verify before relying on it.
-  spawn('open', '-n', '-a', sketchup, '--args',
-        '-RubyStartup', bootstrap, '-RubyStartupArg', startup_arg)
+  # SketchUp has to be launched through `open`. Running the binary inside the app
+  # bundle directly does not run the `-RubyStartup` file at all. Arguments must
+  # come after `--args`, or `open` interprets them itself, and `-n` forces a new
+  # instance - without it `open` just activates an already running SketchUp and
+  # silently drops the arguments.
+  #
+  # DYLD_LIBRARY_PATH works around SKEXT-5430. The bundled debug gem's native
+  # extension is linked against a libruby path that SketchUp's packaging removes,
+  # so it fails to load unless dyld is pointed at the framework directory, which
+  # holds a matching `libruby.<major>.<minor>.dylib` symlink. Using
+  # `Versions/Current` keeps this independent of the Ruby version. That directory
+  # contains only `Ruby` and those symlinks, so nothing else can be shadowed.
+  #
+  # It has to be passed via `--env` because `open` strips `DYLD_*` from the
+  # inherited environment. `--env` requires macOS 13 or newer.
+  #
+  # Wait for `open` with `system` rather than letting it run detached. `open`
+  # returns as soon as it has handed the request to LaunchServices, so there is
+  # nothing to gain from backgrounding it - and doing so is a race: this script
+  # would exit immediately, and a caller that reaps the process group when the
+  # command finishes, such as a VSCode task, then kills `open` before it ever
+  # starts SketchUp. Nothing launches and nothing reports an error. Once
+  # LaunchServices has taken over, SketchUp is reparented to launchd and is
+  # unaffected by anything happening to this script.
+  ruby_framework = File.join(sketchup, 'Contents/Frameworks/Ruby.framework/Versions/Current')
+  launched = system('open', '-n', '-a', sketchup,
+                    '--env', "DYLD_LIBRARY_PATH=#{ruby_framework}",
+                    '--args', '-RubyStartup', bootstrap, '-RubyStartupArg', startup_arg)
+  unless launched
+    warn "`open` failed to launch SketchUp #{year}."
+    exit(1)
+  end
 else
   spawn(sketchup, '-RubyStartup', bootstrap, '-RubyStartupArg', startup_arg)
 end

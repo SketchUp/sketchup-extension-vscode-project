@@ -5,15 +5,16 @@
   "tasks": [
     {
       // Starts SketchUp with tools/su_debug_bootstrap.rb passed via
-      // -RubyStartup, which opens the debug server on port 7000. Then attach
+      // -RubyStartup, which opens the debug server on port 7150. Then attach
       // with the "Attach to SketchUp" launch configuration. See DEBUGGING.md.
+      // Keep this port in sync with .vscode/launch.json.
       "label": "Launch SketchUp for debugging",
       "type": "process",
       "command": "ruby",
       "args": [
         "tools/debug-sketchup.rb",
         "${input:sketchupVersion}",
-        "7000"
+        "7150"
       ],
       "runOptions": {
         "reevaluateOnRerun": false

@@ -14,7 +14,7 @@
 #
 # Configured either by SketchUp's `-RubyStartupArg`, which arrives in Ruby's ARGV:
 #
-#   -RubyStartupArg "su_debug:port=7000,wait=1"
+#   -RubyStartupArg "su_debug:port=7150,wait=1"
 #
 # or by environment variables (RUBY_DEBUG_PORT, RUBY_DEBUG_WAIT). The ARGV form is
 # preferred because it does not depend on the environment surviving however
@@ -43,13 +43,16 @@ module SketchUpDebugBootstrap
   # How often to let the Ruby VM schedule the debugger's background threads.
   PUMP_INTERVAL = 0.1
 
+  # Directory holding a stub `irb/completion`, for builds that ship no irb.
+  IRB_STUB_DIR = 'irb_stub'
+
   def self.log(message)
     File.open(LOG_PATH, 'a') { |file| file.puts("#{Time.now.strftime('%H:%M:%S')} #{message}") }
   rescue StandardError
     nil
   end
 
-  # Parses `su_debug:port=7000,wait=1` out of ARGV. ARGV is shared with the rest
+  # Parses `su_debug:port=7150,wait=1` out of ARGV. ARGV is shared with the rest
   # of SketchUp, so it is only read, never modified.
   def self.argv_options
     argument = ARGV.find { |value| value.to_s.downcase.start_with?(ARGV_PREFIX) }
@@ -85,6 +88,8 @@ module SketchUpDebugBootstrap
     # treat the client as sharing its filesystem, which it does.
     DEBUGGER__::CONFIG[:local_fs_map] = true
 
+    preload_dap_server
+
     # Passing the port explicitly rather than relying on RUBY_DEBUG_PORT also
     # forces TCP instead of a Unix domain socket. The host defaults to
     # CONFIG[:host], which is 127.0.0.1, so this never listens beyond loopback.
@@ -101,6 +106,42 @@ module SketchUpDebugBootstrap
   rescue Exception => error
     log("failed: #{error.class}: #{error.message}")
     log(error.backtrace.first(10).join("\n"))
+  end
+
+  # Load the debug gem's DAP server now rather than letting it be required lazily
+  # when a client connects.
+  #
+  # `server_dap.rb` opens with an unconditional `require 'irb/completion'`, and
+  # SketchUp's macOS builds ship no irb library (SKEXT-5431). Left to itself the
+  # LoadError surfaces inside the debug gem's reader thread part way through the
+  # handshake, killing that thread: the client's connection is accepted and then
+  # never answered, which looks exactly like the GVL problem the thread pump below
+  # solves. Loading it here means a missing irb is reported in this log instead,
+  # and a failure cannot happen later during an attach.
+  def self.preload_dap_server
+    stub = nil
+
+    begin
+      require 'irb/completion'
+    rescue LoadError
+      stub = File.join(__dir__, IRB_STUB_DIR)
+      if Dir.exist?(stub)
+        $LOAD_PATH.unshift(stub)
+        log('no irb library in this Ruby; using the bundled irb/completion stub')
+      else
+        stub = nil
+        log("no irb library in this Ruby and no stub at #{File.join(__dir__, IRB_STUB_DIR)}; " \
+            'debugger clients will not be able to attach')
+      end
+    end
+
+    begin
+      require 'debug/server_dap'
+      log('DAP server loaded')
+    ensure
+      # Never leave $LOAD_PATH modified - it is shared with every extension.
+      $LOAD_PATH.delete(stub) if stub
+    end
   end
 
   # SketchUp only runs the Ruby VM while it is executing Ruby code. While
