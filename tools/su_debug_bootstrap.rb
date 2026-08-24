@@ -64,6 +64,31 @@ module SketchUpDebugBootstrap
     end
   end
 
+  # Load the debugger with only SketchUp's own gem paths visible.
+  #
+  # RubyGems always searches Gem.user_dir (~/.gem/ruby/<abi>), and SketchUp keeps
+  # it on GEM_PATH. Anything installed there for the matching Ruby version leaks
+  # into SketchUp - most commonly a per-machine Ruby set up for Ruby LSP that
+  # happens to share SketchUp's Ruby version, dropping irb/reline/rbs/prism and
+  # friends into that directory. RubyGems then activates those newer versions to
+  # satisfy the debug gem's dependencies (debug -> irb -> prism, ...), and a
+  # single missing transitive gem makes `require 'debug/session'` fail outright.
+  #
+  # Dropping the user dir for the duration of the require lets SketchUp's bundled
+  # debug/irb/reline and Ruby's default gems win. The paths are restored
+  # afterwards so nothing else in the session is affected - everything the debug
+  # gem needs at attach time is loaded here via preload_dap_server.
+  def self.with_sketchup_gems_only
+    home = Gem.paths.home
+    original = Gem.paths.path.dup
+    user_dir = File.expand_path(Gem.user_dir)
+    Gem.use_paths(home, original.reject { |path| File.expand_path(path) == user_dir })
+    log("loading debugger with gem paths: #{Gem.paths.path.join(File::PATH_SEPARATOR)}")
+    yield
+  ensure
+    Gem.use_paths(home, original)
+  end
+
   def self.start
     options = argv_options
     port = options['port']
@@ -74,21 +99,25 @@ module SketchUpDebugBootstrap
 
     log("starting: port=#{port} wait=#{wait} SketchUp=#{Sketchup.version} Ruby=#{RUBY_VERSION}")
 
-    begin
-      require 'debug/session'
-    rescue LoadError => error
-      log("the `debug` gem is not available in this SketchUp's Ruby: #{error.message}")
-      return
+    loaded = with_sketchup_gems_only do
+      begin
+        require 'debug/session'
+      rescue LoadError => error
+        log("the `debug` gem is not available in this SketchUp's Ruby: #{error.message}")
+        next false
+      end
+
+      # The debug gem only auto-enables local filesystem path mapping for Unix
+      # domain sockets. For TCP it leaves the mapping unset, and then rejects every
+      # `setBreakpoints` request with "<path> is not available" - which is why
+      # breakpoints set in the editor never bind. Setting this makes the debuggee
+      # treat the client as sharing its filesystem, which it does.
+      DEBUGGER__::CONFIG[:local_fs_map] = true
+
+      preload_dap_server
+      true
     end
-
-    # The debug gem only auto-enables local filesystem path mapping for Unix
-    # domain sockets. For TCP it leaves the mapping unset, and then rejects every
-    # `setBreakpoints` request with "<path> is not available" - which is why
-    # breakpoints set in the editor never bind. Setting this makes the debuggee
-    # treat the client as sharing its filesystem, which it does.
-    DEBUGGER__::CONFIG[:local_fs_map] = true
-
-    preload_dap_server
+    return unless loaded
 
     # Passing the port explicitly rather than relying on RUBY_DEBUG_PORT also
     # forces TCP instead of a Unix domain socket. The host defaults to
