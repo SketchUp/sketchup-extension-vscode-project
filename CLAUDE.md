@@ -62,11 +62,12 @@ Verified on Windows, and on macOS against SketchUp 2026 (26.2.242) / macOS 26.6.
 
 Port 7150 rather than 7000: macOS AirPlay Receiver occupies 7000, and 7000-7009 is the registered AFS range. Keep `.vscode/tasks.json`, `.vscode/launch.json` and `DEFAULT_PORT` in `tools/debug-sketchup.rb` in sync.
 
-Four workarounds are needed — do not remove any of them:
+Five workarounds are needed — do not remove any of them:
 
 - `DEBUGGER__::CONFIG[:local_fs_map] = true`. Over TCP the `debug` gem does not assume the client shares its filesystem, and rejects every `setBreakpoints` request with "`<path>` is not available". Without this, breakpoints set in the editor never bind and only `binding.break` works.
 - A `UI.start_timer(0.1, true) { Thread.pass }` pump. SketchUp only runs the Ruby VM while executing Ruby, and holds the GVL while idle, so the debug gem's server threads are otherwise never scheduled — the port accepts connections but no DAP request is ever answered.
 - macOS only, `--env DYLD_LIBRARY_PATH=<app>/Contents/Frameworks/Ruby.framework/Versions/Current` on the `open` command. The bundled `debug` gem's native extension is linked against a libruby path that SketchUp's packaging removes, so `require 'debug/session'` fails without it (SKEXT-5430). `open` strips `DYLD_*`, hence `--env`, which needs macOS 13 or newer.
+- Loading the debugger with `Gem.user_dir` dropped from the gem search path. SketchUp keeps it on `GEM_PATH` on Windows, so gems installed there for a matching Ruby version — easily done by a per-machine Ruby set up for Ruby LSP — get activated to satisfy the `debug` gem's dependency chain (`debug` → `irb` → `prism`, …), and one missing transitive gem makes `require 'debug/session'` fail outright. The paths are restored afterwards. Inert on macOS, where the user dir is not on the gem path, but applied unconditionally.
 - macOS only, the stub `tools/irb_stub/irb/completion.rb`. SketchUp's macOS Ruby ships no irb library, while the `debug` gem's `server_dap.rb` requires `irb/completion` (SKEXT-5431). The bootstrap loads the DAP server up front so a missing irb is logged rather than killing the debug gem's reader thread mid-handshake — which presents identically to the GVL problem above.
 
 On macOS, SketchUp must be launched via `open`; executing the binary inside the app bundle directly does not run the `-RubyStartup` file, because macOS reads those switches through `NSUserDefaults` instead of parsing the command line.

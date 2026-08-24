@@ -150,8 +150,13 @@ Because the stub is found relative to the bootstrap, prefer a **symlink** over a
 if you install the bootstrap into the Plugins folder, so `tools/irb_stub` stays
 reachable.
 
-Verified on macOS 26.6.1 (arm64) against SketchUp 2026 (26.2.242): the handshake
-completes and a breakpoint set by path reports `verified`.
+Verified on macOS 26.6.1 (arm64) against SketchUp 2024, 2025 and 2026: the handshake
+completes and breakpoints set in the editor bind and hit.
+
+SketchUp 2027 launches correctly, but ships no `debug` gem on macOS, so there is
+nothing to attach to. The bootstrap logs *"the `debug` gem is not available in this
+SketchUp's Ruby"* and returns without opening the port — so the task appears to
+succeed while <kbd>F5</kbd> then fails to connect. Tracked as SKEXT-5426.
 
 ### Debugging extension startup
 
@@ -242,6 +247,35 @@ UI.start_timer(0.1, true) { Thread.pass }
 `Thread.pass` is enough and does not stall the UI. This is also the likely cause
 of the intermittent behaviour reported in earlier experiments: whether it worked
 depended on how much Ruby happened to be running.
+
+Note that a missing irb library produces the *same* symptom on macOS for an entirely
+different reason — see the [macOS](#macos) section. Check the bootstrap log before
+concluding the thread pump is at fault.
+
+### User-installed gems break the debugger's own dependencies
+
+RubyGems always searches `Gem.user_dir`, and on Windows SketchUp keeps it on
+`GEM_PATH`. Anything installed there for a matching Ruby version leaks into
+SketchUp — most easily a per-machine Ruby set up for Ruby LSP that happens to share
+SketchUp's Ruby version, which drops `irb`, `reline`, `rbs`, `prism` and friends into
+that directory.
+
+RubyGems then activates those newer copies to satisfy the `debug` gem's dependency
+chain (`debug` → `irb` → `prism`, …), and a single missing transitive gem makes
+`require 'debug/session'` fail outright — so the debugger never initialises at all.
+
+The bootstrap drops the user directory from the gem search path for the duration of
+the require, so SketchUp's own bundled gems win, then restores it. Everything the
+`debug` gem needs at attach time is loaded during that window, so nothing else in the
+session is affected.
+
+The deliberate per-version gem directory,
+`SketchUp <year>/SketchUp/Gems`, is left on the path — that one exists precisely so
+gems can be installed for SketchUp.
+
+On macOS this is currently inert: SketchUp does not put `Gem.user_dir` on the gem
+path there, so there is nothing to filter. It is applied unconditionally rather than
+per-platform, so the protection appears automatically if that ever changes.
 
 ## Choice of extension
 
