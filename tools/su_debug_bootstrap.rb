@@ -167,6 +167,12 @@ module SketchUpDebugBootstrap
     begin
       require 'debug/server_dap'
       log('DAP server loaded')
+    rescue LoadError => error
+      # Deliberately not fatal. The debug gem requires this itself when a client
+      # connects, so failing here must not stop the server from opening - that
+      # would turn "attach fails" into "no debugger at all". Preloading exists
+      # only to surface the failure in this log rather than mid-handshake.
+      log("could not preload the DAP server: #{error.message}")
     ensure
       # Never leave $LOAD_PATH modified - it is shared with every extension.
       $LOAD_PATH.delete(stub) if stub
