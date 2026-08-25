@@ -58,7 +58,7 @@ The port reaches the bootstrap through `-RubyStartupArg "su_debug:port=7150"`, w
 
 SketchUp runs the `-RubyStartup` file *after* loading extensions, so to debug extension startup the bootstrap has to be installed in the Plugins folder and launched with `wait=1` instead.
 
-Verified on Windows, and on macOS against SketchUp 2026 (26.2.242) / macOS 26.6.1 arm64.
+Verified on Windows and macOS, up to and including SketchUp 2027. (macOS 26.6.1 arm64.)
 
 Port 7150 rather than 7000: macOS AirPlay Receiver occupies 7000, and 7000-7009 is the registered AFS range. Keep `.vscode/tasks.json`, `.vscode/launch.json` and `DEFAULT_PORT` in `tools/debug-sketchup.rb` in sync.
 

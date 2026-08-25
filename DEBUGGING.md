@@ -150,13 +150,8 @@ Because the stub is found relative to the bootstrap, prefer a **symlink** over a
 if you install the bootstrap into the Plugins folder, so `tools/irb_stub` stays
 reachable.
 
-Verified on macOS 26.6.1 (arm64) against SketchUp 2024, 2025 and 2026: the handshake
+Verified on macOS 26.6.1 (arm64) against SketchUp 2024 through 2027: the handshake
 completes and breakpoints set in the editor bind and hit.
-
-SketchUp 2027 launches correctly, but ships no `debug` gem on macOS, so there is
-nothing to attach to. The bootstrap logs *"the `debug` gem is not available in this
-SketchUp's Ruby"* and returns without opening the port — so the task appears to
-succeed while <kbd>F5</kbd> then fails to connect. Tracked as SKEXT-5426.
 
 ### Debugging extension startup
 
