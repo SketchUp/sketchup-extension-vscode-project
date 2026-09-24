@@ -49,7 +49,9 @@ All extension code lives under nested Ruby modules (e.g., `Examples::HelloCube`)
 
 ### Testing
 
-Tests use the [TestUp](https://github.com/SketchUp/testup-2) framework (`TestUp::TestCase`), not standard Minitest directly. Tests run inside SketchUp, not standalone Ruby. Test files are in `tests/`.
+Tests use the [TestUp](https://github.com/SketchUp/testup-2) framework (`TestUp::TestCase`), not standard Minitest directly. Tests run inside SketchUp, not standalone Ruby. Test files are in `tests/`, one folder per test suite.
+
+Run them with the `run_tests` tool from the SketchUp bridge, e.g. suite `tests/Cube Example`. After changing extension code, pass the extension's folder in `reload` (e.g. `src/ex_hello_cube`), or the tests run against the code SketchUp loaded at startup. To debug a failure, run just that test, then inspect state with `evaluate_ruby`. If `run_tests` refuses because the model has unsaved changes, ask the user before passing `discard_model_changes`, since the tests may clear the model.
 
 ### SketchUp bridge
 
