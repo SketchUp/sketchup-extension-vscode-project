@@ -4,11 +4,6 @@
       "type": "stdio",
       "command": "ruby",
       "args": ["tools/sketchup-bridge/mcp_server.rb"]
-    },
-    "rubocop": {
-      "type": "stdio",
-      "command": "bundle",
-      "args": ["exec", "rubocop", "--mcp"]
     }
   }
 }
