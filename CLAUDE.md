@@ -29,6 +29,9 @@ bundle exec yard doc
 
 # Launch SketchUp with the Ruby debugger enabled
 ruby tools/debug-sketchup.rb <version> [port]   # e.g., ruby tools/debug-sketchup.rb 2026 7150
+
+# The same, plus the bridge that lets Claude run Ruby in SketchUp
+ruby tools/debug-sketchup.rb <version> --bridge
 ```
 
 ## Architecture
@@ -47,6 +50,10 @@ All extension code lives under nested Ruby modules (e.g., `Examples::HelloCube`)
 ### Testing
 
 Tests use the [TestUp](https://github.com/SketchUp/testup-2) framework (`TestUp::TestCase`), not standard Minitest directly. Tests run inside SketchUp, not standalone Ruby. Test files are in `tests/`.
+
+### SketchUp bridge
+
+When SketchUp was started with `--bridge`, the `evaluate_ruby` tool from the `sketchup-bridge` MCP server runs Ruby in that SketchUp. Use it to check how an API method actually behaves, rather than guessing, and to verify changes in the live model. It is the user's SketchUp session: wrap model changes in `start_operation`/`commit_operation` so they can be undone. See [tools/sketchup-bridge/README.md](tools/sketchup-bridge/README.md).
 
 ### Debugging
 

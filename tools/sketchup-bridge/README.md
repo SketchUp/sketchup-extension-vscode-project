@@ -1,133 +1,68 @@
-# SketchUp Bridge
+# SketchUp bridge
 
-A TCP-based eval bridge that lets external tools (Claude Code, scripts, editors) execute Ruby code inside a running SketchUp instance and read back results.
+Lets Claude Code run Ruby inside a running SketchUp, so that it can check how the API actually behaves, inspect the model, and try out changes, rather than guessing.
 
-## How it works
+It is a development tool, for use while working on an extension. Nothing here is part of the extension itself.
 
-```
-┌──────────────┐   TCP :7200  ┌────────────────────────────────────┐
-│    Client    │ ──────────── │           SketchUp                 │
-│  (terminal)  │  Ruby code → │  ┌──────────────────────────────┐  │
-│              │  ← JSON      │  │  server.rb (background       │  │
-│  client.rb   │              │  │  thread accepts connections, │  │
-│  or any TCP  │              │  │  UI.start_timer evaluates    │  │
-│  client      │              │  │  on the main thread)         │  │
-└──────────────┘              │  └──────────────────────────────┘  │
-                              └────────────────────────────────────┘
-```
+## Setup
 
-**Why the main thread?** SketchUp's Ruby API is not thread-safe. The bridge uses a background thread to accept TCP connections (non-blocking), then `UI.start_timer` to drain a queue and evaluate code on the main thread where API calls are safe.
+1. Start SketchUp with the bridge, using the **Launch SketchUp for debugging, with Claude bridge** task, or:
 
-## Quick start
+   ```sh
+   ruby tools/debug-sketchup.rb 2026 --bridge
+   ```
 
-### 1. Launch SketchUp with the bridge
+   The Ruby Console shows `SketchUp bridge: listening on 127.0.0.1:7200`. The debugger is started as well, so you can still attach to SketchUp as described in [DEBUGGING.md](../../DEBUGGING.md).
 
-From the terminal:
+2. Start Claude Code in the project. It asks whether to enable the `sketchup-bridge` MCP server from `.mcp.json`. Once you approve it, Claude has an `evaluate_ruby` tool.
+
+The MCP server needs Ruby 2.7 or newer on `PATH`, and no gems. Claude Code can be started before or after SketchUp. If SketchUp isn't running, the tool reports that instead of failing.
+
+## From a terminal
+
+`client.rb` sends code to the bridge and prints the result:
 
 ```sh
-ruby tools/sketchup-bridge/launch.rb 2026
+ruby tools/sketchup-bridge/client.rb "Sketchup.active_model.entities.size"
+ruby tools/sketchup-bridge/client.rb < script.rb
 ```
 
-Or use the VSCode task: **"Launch SketchUp with Bridge"** (via `Ctrl+Shift+P` → `Tasks: Run Task`).
+On an error it prints the message and backtrace to stderr, and exits with status 1.
 
-SketchUp will start and print to the Ruby Console:
+## How the code runs
 
-```
-SketchUpBridge: listening on port 7200
-```
-
-### 2. Send Ruby code from the terminal
-
-**Inline expression:**
-
-```sh
-ruby tools/sketchup-bridge/client.rb "Sketchup.active_model.title"
-```
-
-**Multi-line via stdin:**
-
-```sh
-ruby tools/sketchup-bridge/client.rb <<'RUBY'
-model = Sketchup.active_model
-model.start_operation('Bridge Test', true)
-group = model.active_entities.add_group
-face = group.entities.add_face(
-  [0, 0, 0], [1.m, 0, 0], [1.m, 1.m, 0], [0, 1.m, 0]
-)
-face.pushpull(-1.m)
-model.commit_operation
-"Created a cube with #{group.entities.length} entities"
-RUBY
-```
-
-**Pipe a file:**
-
-```sh
-ruby tools/sketchup-bridge/client.rb < my_script.rb
-```
-
-### 3. Read the response
-
-The client prints the result to stdout. The response from the bridge is JSON:
-
-```json
-// Success
-{ "success": true, "result": "\"Untitled\"", "stdout": "" }
-
-// Error
-{ "success": false, "error": "NameError: undefined local variable 'x'",
-  "backtrace": ["(bridge):1:in `<main>'"], "stdout": "" }
-```
-
-The client formats this for you — it prints `stdout` (any `puts` output), then the result. On error it prints the error and backtrace to stderr and exits with code 1.
+- On SketchUp's main thread, at top level, like the Ruby Console. Local variables persist between calls.
+- The value of the last expression is returned as `inspect` shows it. Anything written to `$stdout` or `$stderr` while the code runs is returned with it, instead of appearing in the Ruby Console.
+- SketchUp is frozen until the code finishes.
+- Exceptions are reported back, including syntax errors, and `exit` doesn't close SketchUp.
 
 ## Files
 
-| File        | Runs in  | Purpose                                           |
-| ----------- | -------- | ------------------------------------------------- |
-| `server.rb` | SketchUp | TCP server, queues code, evaluates on main thread |
-| `client.py` | Terminal | Fast client (Python) — no Ruby startup overhead   |
-| `client.rb` | Terminal | Ruby client — same behavior, slower on Windows    |
-| `launch.rb` | Terminal | Launches SketchUp with `-RubyStartup server.rb`   |
+| File            | Runs in     | Purpose                                                  |
+| --------------- | ----------- | -------------------------------------------------------- |
+| `server.rb`     | SketchUp    | Listens for code and evaluates it                        |
+| `mcp_server.rb` | Claude Code | Provides the `evaluate_ruby` tool, forwarding to the bridge |
+| `client.rb`     | Terminal    | Sends code from the command line; used by `mcp_server.rb` |
 
-## VSCode tasks
+## Protocol
 
-Two tasks are available in `.vscode/tasks.json`:
+Connect to `127.0.0.1:7200`, send the code as UTF-8, then close the sending side of the connection. The bridge replies with one JSON object and closes the connection:
 
-- **Launch SketchUp with Bridge** — starts SketchUp with the eval bridge
-- **Launch SketchUp with Bridge + Debug** — bridge + Ruby debugger on port 7000
-
-## Options
-
-### Launch flags
-
-```sh
-ruby tools/sketchup-bridge/launch.rb 2025          # specific version
-ruby tools/sketchup-bridge/launch.rb 2026 --debug  # also attach rdebug on port 7000
+```json
+{ "success": true, "result": "42", "output": "hello\n" }
+{ "success": false, "error": "NameError: undefined local variable or method 'x' for main", "backtrace": ["(bridge):1:in '<main>'"], "output": "" }
 ```
 
-### Port
+Results and output are cut off at 50,000 characters. A connection that hasn't finished sending after 30 seconds is closed.
 
-The default port is `7200`. The client respects the `SKETCHUP_BRIDGE_PORT` environment variable:
+## Limitations
 
-```sh
-SKETCHUP_BRIDGE_PORT=7201 ruby tools/sketchup-bridge/client.rb "1 + 1"
-```
+- **One SketchUp at a time.** The port is fixed, so a second SketchUp started with the bridge reports that the port is in use.
+- **Not while code is running.** The bridge doesn't answer while SketchUp is busy, including while a modal dialog is open.
+- **Anyone on this machine can run code in SketchUp while the bridge is running.** It only listens on `127.0.0.1` and refuses HTTP requests, so other machines and web pages can't reach it, but there is no authentication. That's the same as the debugger, and the reason neither is started unless you ask for it.
 
-To change the server port, edit `PORT` in `server.rb`.
+## Why it works this way
 
-## Use with Claude Code
+SketchUp only runs one `-RubyStartup` file, so when the bridge is started, `server.rb` is that file and it loads the debugger's bootstrap itself.
 
-With SketchUp running and the bridge loaded, Claude Code can evaluate Ruby in SketchUp via the Bash tool:
-
-```sh
-python tools/sketchup-bridge/client.py "Sketchup.active_model.entities.length"
-```
-
-The Python client avoids Ruby's startup overhead on Windows. This lets Claude inspect model state, create geometry, test API calls, and verify changes — all inside the live SketchUp session.
-
-A future improvement would be wrapping this as an MCP server, giving Claude a native `evaluate_ruby` tool instead of going through Bash.
-
-## Security note
-
-The bridge evaluates arbitrary Ruby code. It binds to `127.0.0.1` (localhost only), so it is not accessible from the network. This is intended for local development only.
+SketchUp holds Ruby's global VM lock while it is idle, so Ruby threads in SketchUp barely run. Instead of a thread, the bridge uses a `UI.start_timer` on the main thread to check for connections without blocking, which is also where the SketchUp API has to be called from. That answers a request in a few tens of milliseconds, where a thread took seconds.

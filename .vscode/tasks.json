@@ -22,26 +22,16 @@
       "problemMatcher": []
     },
     {
-      "label": "Launch SketchUp with Bridge",
-      "type": "shell",
+      // The same, plus the eval bridge on port 7200, which lets Claude Code run
+      // Ruby in SketchUp. See tools/sketchup-bridge/README.md.
+      "label": "Launch SketchUp for debugging, with Claude bridge",
+      "type": "process",
       "command": "ruby",
       "args": [
-        "tools/sketchup-bridge/launch.rb",
-        "${input:sketchupVersion}"
-      ],
-      "runOptions": {
-        "reevaluateOnRerun": false
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Launch SketchUp with Bridge + Debug",
-      "type": "shell",
-      "command": "ruby",
-      "args": [
-        "tools/sketchup-bridge/launch.rb",
+        "tools/debug-sketchup.rb",
         "${input:sketchupVersion}",
-        "--debug"
+        "7150",
+        "--bridge"
       ],
       "runOptions": {
         "reevaluateOnRerun": false

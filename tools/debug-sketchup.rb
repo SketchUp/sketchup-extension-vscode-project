@@ -1,8 +1,11 @@
 # Helper script to launch SketchUp with Ruby debugging enabled.
 #
-#   ruby tools/debug-sketchup.rb <version> [port]
+#   ruby tools/debug-sketchup.rb <version> [port] [--bridge]
 #
 # The version may be given as either `2026` or `26`.
+#
+# `--bridge` also starts the eval bridge in tools/sketchup-bridge, which lets
+# Claude Code run Ruby in SketchUp. See tools/sketchup-bridge/README.md.
 #
 # SketchUp is launched with `-RubyStartup` pointing at
 # tools/su_debug_bootstrap.rb, which starts the `debug` gem's server, and with
@@ -24,11 +27,12 @@ OLDEST_SUPPORTED = 2024
 # registered AFS range, so the debug server cannot bind it.
 DEFAULT_PORT = '7150'
 
+bridge = !ARGV.delete('--bridge').nil?
 raw_version = ARGV[0].to_s
 port = (ARGV[1] || ENV['RUBY_DEBUG_PORT'] || DEFAULT_PORT).to_s
 
 if raw_version.empty?
-  warn 'Usage: ruby tools/debug-sketchup.rb <version> [port]'
+  warn 'Usage: ruby tools/debug-sketchup.rb <version> [port] [--bridge]'
   exit(1)
 end
 
@@ -42,9 +46,15 @@ if version < OLDEST_SUPPORTED
   exit(1)
 end
 
-bootstrap = File.expand_path('su_debug_bootstrap.rb', __dir__)
-unless File.exist?(bootstrap)
-  warn "Could not find the debug bootstrap at: #{bootstrap}"
+# SketchUp runs only one -RubyStartup file, so the bridge's server loads the
+# debug bootstrap itself.
+startup = if bridge
+            File.expand_path('sketchup-bridge/server.rb', __dir__)
+          else
+            File.expand_path('su_debug_bootstrap.rb', __dir__)
+          end
+unless File.exist?(startup)
+  warn "Could not find the startup file at: #{startup}"
   exit(1)
 end
 
@@ -80,6 +90,7 @@ end
 
 puts "Launching SketchUp #{year} with the debugger listening on port #{port}."
 puts 'Attach with the "Attach to SketchUp" launch configuration.'
+puts 'The eval bridge will listen on port 7200.' if bridge
 
 # The port is passed in Ruby's ARGV via -RubyStartupArg rather than in the
 # environment, so it does not matter how SketchUp gets launched.
@@ -114,11 +125,11 @@ if mac
   ruby_framework = File.join(sketchup, 'Contents/Frameworks/Ruby.framework/Versions/Current')
   launched = system('open', '-n', '-a', sketchup,
                     '--env', "DYLD_LIBRARY_PATH=#{ruby_framework}",
-                    '--args', '-RubyStartup', bootstrap, '-RubyStartupArg', startup_arg)
+                    '--args', '-RubyStartup', startup, '-RubyStartupArg', startup_arg)
   unless launched
     warn "`open` failed to launch SketchUp #{year}."
     exit(1)
   end
 else
-  spawn(sketchup, '-RubyStartup', bootstrap, '-RubyStartupArg', startup_arg)
+  spawn(sketchup, '-RubyStartup', startup, '-RubyStartupArg', startup_arg)
 end
