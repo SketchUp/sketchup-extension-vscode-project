@@ -14,8 +14,8 @@ module SketchUpBridge
     # Used when the client doesn't ask for a particular version.
     PROTOCOL_VERSION = '2025-06-18'
 
-    # Loaded into SketchUp by `run_tests`.
-    TESTUP_RUNNER = File.expand_path('testup_runner.rb', __dir__)
+    # The part of `run_tests` that runs inside SketchUp.
+    RUN_TESTS_IN_SKETCHUP = File.expand_path('run_tests.rb', __dir__)
 
     EVALUATE_RUBY = {
       name: 'evaluate_ruby',
@@ -170,8 +170,16 @@ module SketchUpBridge
         'seed' => arguments['seed'],
         'discard_model_changes' => arguments['discard_model_changes'] == true
       }
-      code = "load #{TESTUP_RUNNER.dump}\n" \
-             "SketchUpBridge::TestUpRunner.run(JSON.parse(#{JSON.generate(options).dump}))"
+      # Warnings about constants being defined again, from loading the file a
+      # second time, would otherwise end up in front of the JSON.
+      code = "verbose = $VERBOSE\n" \
+             "$VERBOSE = nil\n" \
+             "begin\n" \
+             "  load #{RUN_TESTS_IN_SKETCHUP.dump}\n" \
+             "ensure\n" \
+             "  $VERBOSE = verbose\n" \
+             "end\n" \
+             "SketchUpBridge::RunTests.run(JSON.parse(#{JSON.generate(options).dump}))"
       response = SketchUpBridge.evaluate(code)
       return [error_text(response), true] unless response['success']
 
@@ -206,10 +214,9 @@ module SketchUpBridge
           lines.concat(failure['message'].to_s.lines.map { |line| "  #{line.chomp}" })
         end
       end
-      # TestUp's own output is noise when everything passed, but it includes
-      # anything the tests printed, and warnings about test files that failed
-      # to load.
-      if report['tests'].zero? || report['problems'].any?
+      # TestUp runs quietly, so this is what the tests printed, and warnings
+      # such as test files that failed to load.
+      unless report['output'].strip.empty?
         lines << ''
         lines << 'Output:'
         lines << report['output']

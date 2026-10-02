@@ -38,10 +38,10 @@ On an error it prints the message and backtrace to stderr, and exits with status
 
 ## Running TestUp tests
 
-`run_tests` runs a [TestUp](https://github.com/SketchUp/testup-2) test suite in SketchUp, and reports each failure, error and skip with its message and location. It needs TestUp to be installed in that SketchUp. It doesn't need TestUp's window, and doesn't install any gems.
+`run_tests` runs a [TestUp](https://github.com/SketchUp/testup-2) test suite in SketchUp, and reports each failure, error and skip with its message and location. It needs TestUp 2.6 or newer installed in that SketchUp. It doesn't need TestUp's window, and doesn't install any gems.
 
 - **Suite:** the folder holding the `TC_*.rb` files, such as `tests/Cube Example`.
-- **Tests:** test cases or single tests, such as `TC_Main` or `TC_Main#test_create_cube`, with or without their namespace. By default the whole suite runs. Names are checked against the suite, because TestUp silently runs nothing for a name that doesn't match.
+- **Tests:** test cases or single tests, such as `TC_Main` or `TC_Main#test_create_cube`, with or without their namespace. By default the whole suite runs. A name that matches no test is reported as an error.
 - **Reload:** folders or files of extension code to `load` again before running, such as `src/ex_hello_cube`. TestUp loads the test files again on every run, but not the code they test, so without this the tests keep running against the code SketchUp loaded at startup. The extension itself is expected to be loaded already.
 - **Seed:** the Minitest seed, which is reported with every run, so that an order-dependent failure can be repeated.
 
@@ -50,12 +50,12 @@ Tests run in the active model, and many start by clearing it. So `run_tests` ref
 A test that opens a model file, while the current one has unsaved changes, makes SketchUp ask whether to save them. SketchUp is frozen until that is answered. Tests usually close the model first, with `model.close(true)`.
 
 
-| File               | Runs in     | Purpose                                                                |
-| ------------------ | ----------- | ---------------------------------------------------------------------- |
-| `server.rb`        | SketchUp    | Listens for code and evaluates it                                      |
-| `mcp_server.rb`    | Claude Code | Provides the `evaluate_ruby` and `run_tests` tools, through the bridge |
-| `testup_runner.rb` | SketchUp    | Runs TestUp tests for `run_tests`; loaded again on every run           |
-| `client.rb`        | Terminal    | Sends code from the command line; used by `mcp_server.rb`              |
+| File            | Runs in     | Purpose                                                                      |
+| --------------- | ----------- | ---------------------------------------------------------------------------- |
+| `server.rb`     | SketchUp    | Listens for code and evaluates it                                            |
+| `mcp_server.rb` | Claude Code | Provides the `evaluate_ruby` and `run_tests` tools, through the bridge       |
+| `run_tests.rb`  | SketchUp    | The part of `run_tests` that runs inside SketchUp; loaded again on every run |
+| `client.rb`     | Terminal    | Sends code from the command line; used by `mcp_server.rb`                    |
 
 ## Protocol
 

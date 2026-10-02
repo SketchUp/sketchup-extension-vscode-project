@@ -1,4 +1,5 @@
-# Runs TestUp tests inside SketchUp, for the `run_tests` tool in mcp_server.rb.
+# The part of the `run_tests` tool (mcp_server.rb) that runs inside SketchUp.
+# It runs the tests with TestUp's API, and returns the results.
 #
 # mcp_server.rb `load`s this file through the bridge before every run, so
 # changes to it take effect without restarting SketchUp. The result is written
@@ -9,7 +10,12 @@ require 'json'
 require 'stringio'
 
 module SketchUpBridge
-  module TestUpRunner
+  module RunTests
+
+    # The first version with the `quiet` option, which returns results from
+    # `TestUp::API.run_tests` outside of TestUp's window, and which raises an
+    # error for test names that match nothing.
+    TESTUP_VERSION = '2.6.0'
 
     # Notices changes to the model made after a test run: by the user, or by
     # code sent through the bridge. Changes the tests made themselves are fine
@@ -59,7 +65,8 @@ module SketchUpBridge
     end
 
     def self.run_suite(options)
-      return { error: 'TestUp is not loaded in this SketchUp.' } unless defined?(TestUp::API)
+      error = check_testup
+      return { error: error } if error
 
       suite_path = options['suite']
       return { error: "No such test suite folder: #{suite_path}" } unless File.directory?(suite_path)
@@ -78,16 +85,32 @@ module SketchUpBridge
       suite = TestUp::API.discover_tests([suite_path]).first
       return { error: "No test cases found in #{suite_path}" } if suite.nil? || suite.test_cases.empty?
 
-      patterns = resolve(suite, options['tests'] || [])
-      return patterns if patterns.is_a?(Hash) # An error.
+      tests = options['tests'] || []
+      tests = tests.empty? ? suite.test_cases.map { |test_case| "#{test_case.title}#" } : full_names(suite, tests)
 
       seed = (options['seed'] || rand(1..0xFFFF)).to_i
+      results = nil
       started = Time.now
-      TestUp::API.run_tests(patterns, title: suite.title, path: suite_path, options: { ui: true, seed: seed })
+      begin
+        TestUp::API.run_tests(tests, title: suite.title, path: suite_path,
+                                     options: { quiet: true, seed: seed }) { |test_suite| results = test_suite }
+      rescue ArgumentError => error
+        # Names that match no test. The message lists the suite's test cases.
+        return { error: error.message }
+      end
       seconds = Time.now - started
 
       track(Sketchup.active_model)
-      summarize(TestUp::Reporter.results, seed, seconds, reloaded)
+      summarize(results, seed, seconds, reloaded)
+    end
+
+    def self.check_testup
+      return 'TestUp is not loaded in this SketchUp.' unless defined?(TestUp::API)
+
+      version = TestUp::PLUGIN_VERSION
+      return nil if Gem::Version.new(version) >= Gem::Version.new(TESTUP_VERSION)
+
+      "run_tests needs TestUp #{TESTUP_VERSION} or newer, and this SketchUp has TestUp #{version}."
     end
 
     # Loads extension code again, so the tests run against the latest source.
@@ -104,32 +127,16 @@ module SketchUpBridge
       $VERBOSE = verbose
     end
 
-    # Turns the requested names into the patterns TestUp expects: full test case
-    # names, followed by `#` to run the whole case or `#test_name` for one test.
-    # A pattern that matches nothing makes TestUp silently run no tests, so every
-    # name is checked against what the suite contains.
-    def self.resolve(suite, requested)
-      return suite.test_cases.map { |test_case| "#{test_case.title}#" } if requested.empty?
-
-      requested.map do |name|
+    # TestUp needs the full name of a test case, including its namespace. This
+    # adds the namespace to a name given without one, when exactly one test
+    # case in the suite has that name. Anything else is passed on as it is, and
+    # TestUp reports names that match nothing.
+    def self.full_names(suite, tests)
+      tests.map do |name|
         case_name, test_name = name.split('#', 2)
-        matches = suite.test_cases.select do |test_case|
-          test_case.title == case_name || test_case.title.end_with?("::#{case_name}")
-        end
-        if matches.size != 1
-          problem = matches.empty? ? 'No test case matches' : 'More than one test case matches'
-          return { error: "#{problem} `#{name}`. Test cases in this suite: " \
-                          "#{suite.test_cases.map(&:title).join(', ')}" }
-        end
-
-        test_case = matches.first
-        if test_name && !test_name.empty?
-          tests = test_case.tests.map(&:title)
-          unless tests.include?(test_name)
-            return { error: "#{test_case.title} has no test `#{test_name}`. Its tests: #{tests.join(', ')}" }
-          end
-        end
-        "#{test_case.title}##{test_name}"
+        matches = suite.test_cases.map(&:title).select { |title| title.end_with?("::#{case_name}") }
+        case_name = matches.first if matches.size == 1
+        "#{case_name}##{test_name}"
       end
     end
 
@@ -149,29 +156,30 @@ module SketchUpBridge
       @tracker.changed = false
     end
 
+    # @param [TestUp::Report::TestSuite] results
     def self.summarize(results, seed, seconds, reloaded)
-      status = lambda do |result|
-        if result[:passed] then 'passed'
-        elsif result[:skipped] then 'skipped'
-        elsif result[:error] then 'error'
-        else 'failed'
-        end
-      end
       counts = Hash.new(0)
       problems = []
-      results.each do |result|
-        state = status.(result)
-        counts[state] += 1
-        next if state == 'passed'
+      results.test_cases.each do |test_case|
+        test_case.tests.each do |test|
+          result = test.result
+          state = if result.passed then 'passed'
+                  elsif result.skipped then 'skipped'
+                  elsif result.error then 'error'
+                  else 'failed'
+                  end
+          counts[state] += 1
+          next if state == 'passed'
 
-        problems << {
-          test: "#{result[:test_case_name]}##{result[:test_name]}",
-          status: state,
-          failures: result[:failures].map { |failure| { message: failure[:message], location: failure[:location] } }
-        }
+          problems << {
+            test: "#{test_case.title}##{test.title}",
+            status: state,
+            failures: result.failures.map { |failure| { message: failure.message, location: failure.location } }
+          }
+        end
       end
       {
-        tests: results.size, counts: counts, seed: seed, seconds: seconds.round(3),
+        tests: counts.values.sum, counts: counts, seed: seed, seconds: seconds.round(3),
         reloaded_files: reloaded, problems: problems
       }
     end
